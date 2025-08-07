@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ShowUserException, StoreProvider, createStore } from 'kiss-for-react';
 import React from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { Alert, Platform, StyleSheet, View, ViewStyle, Dimensions } from 'react-native';
 import 'react-native-reanimated';
 
 export const userExceptionDialog: ShowUserException =
@@ -65,18 +65,49 @@ function MainAppLayout() {
 
   const isDarkTheme = useIsDarkTheme();
 
-  return (
-    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
-      <View style={Platform.OS === 'web' && styles.webContentWrapper}>
-        <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="card" options={{ headerShown: false }} />        
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style={isDarkTheme ? 'light' : 'dark'} />
-        </ThemeProvider>
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.webContainer}>
+        <View style={styles.phoneDevice as ViewStyle}>
+          {/* Phone frame */}
+          <View style={styles.phoneFrame as ViewStyle}>
+            {/* Notch */}
+            <View style={styles.notch as ViewStyle} />
+            
+            {/* Volume buttons */}
+            <View style={styles.volumeUp as ViewStyle} />
+            <View style={styles.volumeDown as ViewStyle} />
+            
+            {/* Power button */}
+            <View style={styles.powerButton as ViewStyle} />
+            
+            {/* Screen area */}
+            <View style={styles.phoneScreen as ViewStyle}>
+              <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
+                <Stack>
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="card" options={{ headerShown: false }} />        
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style={isDarkTheme ? 'light' : 'dark'} />
+              </ThemeProvider>
+            </View>
+          </View>
+        </View>
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.container as ViewStyle}>
+      <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="card" options={{ headerShown: false }} />        
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style={isDarkTheme ? 'light' : 'dark'} />
+      </ThemeProvider>
     </View>
   );
 }
@@ -86,13 +117,74 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   webContainer: {
-    backgroundColor: '#222222',
-    alignItems: 'center',
-  },
-  webContentWrapper: {
-    maxWidth: 400,
-    width: '100%',
     flex: 1,
+    backgroundColor: '#1a1a1a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: Dimensions.get('window').height,
+  },
+  phoneDevice: {
+    position: 'relative',
+    width: 400,
+    height: 800,
+    marginVertical: 20,
+  },
+  phoneFrame: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000',
+    borderRadius: 40,
+    padding: 10,
+    boxShadow: '0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
+  },
+  phoneScreen: {
+    flex: 1,
+    backgroundColor: '#000',
+    borderRadius: 30,
+    overflow: 'hidden',
+  },
+  notch: {
+    position: 'absolute',
+    top: 10,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 180,
+    height: 30,
+    backgroundColor: '#000',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    zIndex: 10,
+  },
+  volumeUp: {
+    position: 'absolute',
+    left: -3,
+    top: 150,
+    width: 3,
+    height: 40,
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
+  },
+  volumeDown: {
+    position: 'absolute',
+    left: -3,
+    top: 200,
+    width: 3,
+    height: 40,
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
+  },
+  powerButton: {
+    position: 'absolute',
+    right: -3,
+    top: 180,
+    width: 3,
+    height: 60,
+    backgroundColor: '#1a1a1a',
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
   },
 });
 

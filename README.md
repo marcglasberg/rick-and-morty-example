@@ -1,2 +1,366 @@
-# rick-and-morty-example
-Example React app that demonstrates the Kiss State Management package.
+# README
+
+This is a React Native application using [Expo](https://expo.dev) (created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app)), and my own [Kiss](https://kissforreact.org) package for state management.
+
+The app follows a clean architecture pattern with the following directory structure:
+
+* State management in `business/state` with immutable state
+* Kiss actions in `business/actions`
+* GraphQL encapsulated in DAO (Data Access Object) in `business/dao`
+* UI components in `components`
+* Custom hooks in `hooks`
+* App screens in `app` using Expo Router's file-based routing
+* Tests and mocks in the `__tests__` and `__mocks__` directories
+
+The app is a card collection for Rick and Morty characters, where users can:
+
+* View a list of cards
+* Scroll the list to load more cards (infinite scroll)
+* Retry fetching cards when there is no internet connection
+* View details of individual cards by tapping them
+* Like or unlike cards by tapping the heart icon
+* Reload the app and see that the likes are locally saved
+* Toggle between light and dark themes
+* Haptic feedback (vibration) for card taps and likes
+
+Note: _The app is designed for mobile phones only. It's not intended for the web or tablets, though it may mostly function on these platforms._
+
+## Get started
+
+1. Install dependencies
+
+   ```bash
+   npm install
+   ```
+
+   Note: If you encounter dependency issues, that's common with React Native projects and Expo apps when there are minor version mismatches between peer dependencies. In this case, try:
+
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+
+2. Start the app
+
+   ```bash
+   npx expo start
+   ```
+
+   You'll see a QR code in the output.
+
+3. Android: Install the **Expo Go** app on your phone. It's available on the Play Store. Open the app and click "Scan QR Code" to scan the QR code.
+
+4. iOS: Install the **Expo Go** app on your phone. It's available on the App Store. Then, open your device camera and tap the link that appears.
+
+5. Alternatively, you can run the app in an Android emulator or iOS simulator, or create a development build. More information:
+
+   * [Expo Go](https://expo.dev/go)
+   * [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+   * [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+   * [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+
+6. Alternatively, you can run the app for the web only, with:
+
+   ```bash
+   npx expo start --web
+   ```   
+
+   Note: _This app uses React Native for web (RNW), which is a set of component libraries such as <View>, and <Text>, 
+   that wrap react-dom primitives such as <div>, <p>, and <img>. This means this app can run both on mobile devices and 
+   in a web browser._
+
+   The app can also be exported as a production website with:
+
+   ```bash
+   npx expo export --platform web
+   ```   
+
+## The State
+
+In `state.js` the app state is defined as an immutable object of type `State`, which includes:
+
+```typescript
+cardList: CardList; // List of cards of type `Card`
+selectedCardId: string | null; // Card we selected to view details
+totalCount: number; // Total number of cards
+totalPages: number; // Total number of pages of 20 cards each
+likedCards: LikedCards; // List of IDs of liked cards 
+colorScheme: 'light' | 'dark' | null;
+```
+
+The `State` object knows how to modify itself. We call its methods to generate modified copies of the state. We don't need to access its internal details directly to make modifications. By calling its methods, we obtain a new state object reflecting the desired changes. This approach simplifies modifying, reasoning about, and testing the state.
+
+Note that `cardList` and `likedCards`, part of the State, are also immutable objects with their own modification methods. This creates a recursive pattern, where each object knows how to modify itself, allowing us to easily generate updated copies of the entire state.
+
+## Actions
+
+In Kiss, the so-called **actions** are dispatched to modify the state. These actions have access to the entire app state as an immutable snapshot. Each action includes a `reduce` method, which returns a new, modified copy of the state. This modified copy then becomes the new app state.
+
+This approach centralizes the state management logic, making it easier to reason about state changes. For example, here is the action to toggle the like status of a card:
+
+```typescript
+export class ToggleLike extends Action {
+
+   // Card ID to toggle
+   constructor(public cardId: string) { super(); }
+
+   reduce() {
+        // Toggle the card in likedCards
+        let newLikedCards
+            = this.state.likedCards.toggleCard(this.cardId);
+                                                     
+        // Return a new state with updated liked cards
+        return this.state.withLikedCards(newLikedCards);
+    }
+}
+```
+
+Let's look at a more complex action:
+
+### Fetching cards
+
+Cards are fetched by dispatching the `FetchCards` action. The initial part of its code looks like this:
+
+```typescript
+export class FetchCards extends Action {
+
+  nonReentrant = true;
+  retry = { on: true }
+  checkInternet = { dialog: true }
+```
+
+This configuration specifies:
+
+* `nonReentrant = true;` prevents multiple fetches from happening simultaneously.
+
+* `retry = { on: true }` means the action will retry a few times if it fails, helpful for temporary network issues.
+
+* `checkInternet = { dialog: true }` ensures the app checks internet connectivity before executing the fetch. If there is no connection, it gracefully handles airplane mode by showing a dialog to the user with the message: `"There is no Internet. Please verify your connection"`.
+
+Next is the reducer logic:
+
+```typescript
+let nextPage = this.state.nextPage();
+if (nextPage == null) return null;        
+```
+
+The `nextPage` method determines whether more pages need to be loaded. If no more pages are available, returning `null` ends the action early and cancels the fetch.
+
+```typescript
+const { cards, totalCount, totalPages } 
+   = await DAO.loadCards({ page: nextPage });
+```
+
+We now fetch the cards with the `DAO.loadCards()` method.
+
+The DAO (Data Access Object) encapsulates server communication, isolating this logic from the rest of the app. In other words, the rest of the app doesn't know or care about how information is loaded. Currently, the DAO uses GraphQL, but it could use REST or another method without affecting the rest of the application.
+
+This also means the DAO can be simulated during both development and in tests, so we can develop and test the app without needing to connect to the server. This is actually being done in this app, as we'll see later.
+
+Finally, the reducer finishes by updating the state:
+
+```typescript
+// Add the newly fetched cards to the existing list.
+let allCards = this.state.cardList.addCards(cards);
+
+// Return updated state with the new card list and updated totals.
+return (state: State) => 
+   this.state.copy({
+    cardList: allCards, 
+    totalCount: totalCount,
+    totalPages: totalPages
+});        
+```
+
+## Checking Internet Connection
+
+The `FetchCards` action checks if the device is connected to the internet before running. If there is no connection, it displays a dialog with the message "There is no Internet. Please verify your connection." Additionally, a "Retry" button appears at the end of the card list, allowing the user to retry fetching cards when back online.
+
+This is implemented by setting the `checkInternet = { dialog: true }` property on the action. To avoid showing the dialog, set `checkInternet = { dialog: false }` instead. In this case, the "Retry" button will still appear, but no dialog will be shown.
+
+Other actions that require checking internet connectivity can similarly use the `checkInternet` property. This centralizes internet connectivity logic in one place.
+
+### How is it implemented?
+
+The `before()` method of the default Kiss `Action` class (defined in file `action.ts`) runs before each action. It checks if the action includes the `checkInternet` property and uses the `NetInfo` library to verify connectivity. If no internet is available, it throws a `UserException` (optionally showing a dialog), which prevents the reducer from executing and avoids unnecessary network requests.
+
+Note: `UserException` is provided by Kiss, and the app was set up to automatically show a dialog with an error message when this exception is thrown.
+
+```typescript
+export const userExceptionDialog: ShowUserException =
+  (exception, count, next) => {
+    // Use browser's alert on web, and React Native's Alert on mobile.
+    ...
+  };
+
+const store = createStore<State>({
+  initialState: State.initialState,  
+  showUserException: userExceptionDialog,  
+});
+```
+
+Since DAO methods (that load information with GraphQL) are always called within actions, DAOs can also simply throw a `UserException` to show error dialogs to the user.
+
+### Retry button
+
+The `FetchCards` action might fail due to various reasons such as no internet connection, network errors, or server errors.
+
+In the scroll-view component that contains the cards, we check if the `FetchCards` action failed by using:
+
+```typescript
+const isFetchCardsFailed = useIsFailed(FetchCards);
+```
+
+If `isFetchCardsFailed` is true, we display a "Retry" button at the end of the card list. Pressing this button simply dispatches the `FetchCards` action again, automatically removing the "Retry" button and checking internet connectivity again.
+
+## DAO
+
+The DAO (Data Access Object) is a pattern that encapsulates all the code that loads information from the server. It is implemented in the `business/dao` directory, and is used to load the cards from the server.
+
+GraphQL isn't used anywhere else in the app. The app must ask the DAO to load or save data.
+
+**IMPORTANT:** The DAO methods return immutable objects that are already in their ideal format for being used by the app. The DAO never "leaks" the JSON format of the GraphQL. This uncouples the app from the GraphQL implementation, and allows the server API to evolve independently and with minimal impact on the app.
+
+### Simulating the DAO
+
+Since the DAO completely encapsulates server communications, it can be **simulated** during development, and also when running tests. This allows us to develop and test the app without real server connectivity.
+
+To see how this may help during development, open file `app/_layout.tsx` and uncomment the following line:
+
+```typescript
+setDao(new SimulatedDao());
+```
+
+This replaces the real DAO with a simulated one providing fake data. The app will then have only 25 fake cards in 2 pages.
+
+This is very helpful for development, as it allows us to create app features that need information that's not yet available in the server API. This uncouples the app development from the server development.
+
+Additionally, file `fetch-cards-action.test.ts`, which tests the `FetchCards` action, uses the simulated DAO to test the action without needing to connect to the server. By changing a flag, tests can also run against the real DAO when available.
+
+## Card list
+
+When the UI detects the user has scrolled to the end of the card list, it dispatches the `FetchCards` action again, implementing infinite scrolling.
+
+We use Kiss's hooks:
+
+* `const isLoading = useIsWaiting(FetchCards);` to show a "Loading Cards..." message when cards are being fetched.
+
+* `const isFetchCardsFailed = useIsFailed(FetchCards);` to show a "Retry" button if the fetch fails.
+
+As you can see, we get all this functionality of the card list almost for free, with very little code, just by using the state management system itself to monitor that the action is running or has failed.
+
+## Saving likes
+
+Likes are saved locally on the device. When reloading the app, liked cards remain liked. This functionality leverages Kiss's "persistor" feature, which saves the required parts of the state:
+
+```typescript
+async persistDifference(_lastPersistedState: State | null, newState: State) {
+
+    // Get liked cards from the new state
+    let likedCards = newState.likedCards;
+
+    // Serialize likedCards to a string
+    const serialized = JSON.stringify(likedCards.ids);
+
+    // Save the serialized string to AsyncStorage
+    await AsyncStorage.setItem('state', serialized);
+  }
+```
+
+On app startup, liked cards are read automatically:
+
+```typescript
+async readState(): Promise<State | null> {
+
+    // Read serialized JSON string
+    let serialized = await AsyncStorage.getItem('state');
+    if (serialized === null) return null;
+
+    // Deserialize JSON to a list of integers.
+    let likedCardIds = JSON.parse(serialized);
+
+    // Create a new LikedCards instance with the card IDs
+    let likedCards = new LikedCards(likedCardIds);
+
+    // Return a new state with the liked cards
+    return State.initialState.copy({likedCards: likedCards});
+  }
+```
+
+## Testing
+
+Run the tests with:
+
+```bash
+npm run test
+```
+
+Alternatively, install the Jest extension for VSCode (by Orta) and run the tests by clicking the "Play" icon in the test files. View results in the "TEST RESULTS" tab in the bottom panel of VSCode.
+
+By keeping the UI layer as thin as possible and keeping all the business logic in the business logic layer, the app becomes easy to test. Most variations can be tested at the business logic layer, and only basic UI rendering needs to be tested at the UI layer.
+
+### How to test state objects
+
+State objects are immutable and have their own methods to modify themselves. These methods are "pure," meaning they don't produce side effects. This makes them extremely easy to test: We can simply create a new object with modified values by calling these methods, and then compare the result to the expected object. For an example, see file `state-next-page.test.ts`.
+
+### How to test actions
+
+Tests for Kiss actions generally follow this pattern:
+
+1. Set up the store with an initial state
+2. Dispatch one or more actions
+3. Wait for the actions to complete
+4. Verify the new state
+
+Check files like `fetch-cards-action.test.ts` for examples of tests following this pattern.
+
+I also like to use the BDD (Behavior-Driven Development) format for test descriptions. This means structuring test descriptions to clearly outline the initial context, the action performed, and the expected outcome. This makes it easier to understand what the test is doing and why. The BDD pattern looks like this:
+
+```text
+Given [initial context/state].
+When [action is performed].
+And [additional context if needed].
+But [exception to the rule if needed].
+Then [expected outcome].
+```
+
+## Directory structure
+
+I like using a clean architecture pattern, dividing the app into layers. The UI layer (React components) is separated from the business logic layer (Kiss state and actions), which is separated from the data access layer (the DAO).
+
+The current directory structure fits this simple example app well. For a more complex real-world app, I usually prefer organizing files by feature rather than by type. This means all files related to a specific feature are kept in the same directory instead of separated by type. Today, with advanced IDEs like VSCode or IntelliJ, directory structure isn't as important as before, since navigation is often automated. Still, maintaining a clear directory structure helps developers better understand the app by keeping all related files together.
+
+## My Architecture and State Management philosophy
+
+This app needs surprisingly few lines of code to implement complex features like infinite scroll, loading information, retrying failed actions, displaying loading spinners and error indicators, and persisting state. Additionally, the code implementing these features is very easy to read, understand, and modify.
+
+The essence of great software design often boils down to two fundamental principles: making things easy and keeping things simple. At first glance, "easy" and "simple" might appear similar, but there'ss a crucial distinction.
+
+When something is **easy**, it often means minimal code is required to accomplish complex tasks. Frameworks and libraries can offer powerful abstractions that make difficult operations straightforward. Consider Expo's routing mechanism used in this example app: It's remarkably easy to use, and takes very little code to implement because Expo makes numerous assumptions and configurations behind the scenes. This easiness can feel like magic to developers. But this magic has a downside: because the underlying mechanisms aren't always clear, understanding exactly how and why things work can become challenging when issues arise or when customization is needed.
+
+On the other hand, **simplicity** emphasizes clarity and transparency. A simple system is one whose workings and intentions are immediately obvious to the developer. It doesn't hide too much behind abstractions. The design clearly reveals the "why" and "how," making the code inherently self-explanatory and straightforward. Simple solutions feel natural and intuitive rather than magical. Developers using simple solutions understand precisely what's happening under the hood, making maintenance, debugging, and enhancements far easier.
+
+Ideally, we should aim to blend both traits. In my own Kiss State Management package that I use in this app, I took ideas from Redux, MobX, TanStack Query, Zustand and others, to make it easy, and also added some extra features to make it simple, like the ability to handle async actions, persist the state, check if an action is dispatching (to show spinners), has failed (to show error messages), automatic retries, and a lot more. However, it deliberately avoids magical abstractions by clearly communicating its internal operations. This ensures that developers aren't left guessing how things work.
+
+## final notes
+
+### More ideas
+
+The following features were not implemented in this app but could be added in the future:
+
+* **Using Mutations:** Implement a GraphQL mutation to allow users to "like" or "unlike" a card, persisting the state through the API. To do this, create a DAO method called `saveLikes` that uses a GraphQL mutation to save likes on the server. Then, call `await DAO.saveLikes()` from the `ToggleLike` action. This will allow the app to persist likes on the server rather than just on the local device. When the app starts, it can dispatch a `LoadLikes` action that uses the method `let likes = await DAO.loadLikes()` to load likes from the server. This ensures the app syncs likes between the device and the server.
+
+* **Camera Handling (Images, QR Codes, etc.):** Integrate basic camera functionality so that users can capture a photo or scan a QR code.
+
+* **UI tests:** Due to layer separation, the UI has very little logic requiring testing. However, it's still important to test key parts of the UI layer, not only the business logic layer. Testing UI components in React typically involves verifying that components render correctly with expected content and structure, respond properly to user interactions, and reflect the correct state of the app.
+
+### In case of problems with Expo
+
+If you encounter issues with Expo, try the following commands to clear the cache and fix dependencies:
+
+Try:
+
+```bash
+npx expo start --clear
+npx expo install --fix
+npx expo-doctor 
+```

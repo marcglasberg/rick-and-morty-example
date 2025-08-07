@@ -1,16 +1,12 @@
 # README
 
-This is a React Native application using [Expo](https://expo.dev) (created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app)), and my own [Kiss](https://kissforreact.org) package for state management.
+This **Rick and Morty Example** is an example of a React Native application using:
 
-The app follows a clean architecture pattern with the following directory structure:
+* [Expo](https://expo.dev) 
+* [Kiss state management](https://kissforreact.org) package
+* [Rick and Morty API](https://rickandmortyapi.com/) with GraphQL
 
-* State management in `business/state` with immutable state
-* Kiss actions in `business/actions`
-* GraphQL encapsulated in DAO (Data Access Object) in `business/dao`
-* UI components in `components`
-* Custom hooks in `hooks`
-* App screens in `app` using Expo Router's file-based routing
-* Tests and mocks in the `__tests__` and `__mocks__` directories
+View it here: https://rick-and-morty-example.expo.app/
 
 The app is a card collection for Rick and Morty characters, where users can:
 
@@ -23,7 +19,15 @@ The app is a card collection for Rick and Morty characters, where users can:
 * Toggle between light and dark themes
 * Haptic feedback (vibration) for card taps and likes
 
-Note: _The app is designed for mobile phones only. It's not intended for the web or tablets, though it may mostly function on these platforms._
+The app follows a clean architecture pattern with the following directory structure:
+
+* State management in `business/state` with immutable state
+* Kiss actions in `business/actions`
+* GraphQL encapsulated in DAO (Data Access Object) in `business/dao`
+* UI components in `components`
+* Custom hooks in `hooks`
+* App screens in `app` using Expo Router's file-based routing
+* Tests and mocks in the `__tests__` and `__mocks__` directories
 
 ## Get started
 
@@ -58,21 +62,61 @@ Note: _The app is designed for mobile phones only. It's not intended for the web
    * [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
    * [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 
-6. Alternatively, you can run the app for the web only, with:
+6. Alternatively, you can run the app locally (in your local machine) for the web only, with:
 
    ```bash
    npx expo start --web
-   ```   
+   ```      
 
-   Note: _This app uses React Native for web (RNW), which is a set of component libraries such as <View>, and <Text>, 
-   that wrap react-dom primitives such as <div>, <p>, and <img>. This means this app can run both on mobile devices and 
-   in a web browser._
+## Publishing the app to the web
 
-   The app can also be exported as a production website with:
+The app uses React Native for web (RNW), which is a set of component libraries such as `<View>`, and `<Text>`, that wrap react-dom primitives such as `<div>`, `<p>`, and `<img>`. This means this app can run both on mobile devices and in a web browser._   
 
-   ```bash
-   npx expo export --platform web
-   ```   
+You can see the app running [here](https://rick-and-morty-example.expo.app/).
+This deployment was done with Expo's free EAS hosting service, following these steps:
+
+1. Create an Expo account at https://expo.dev/signup 
+2. In the terminal: `npm install --global eas-cli` 
+3. In the terminal: `eas login` and use your Expo account username and password
+4. In the terminal: `npx expo export --platform web`
+5. In the terminal: `eas deploy`
+6. Agree to connect an EAS project (if you haven't done so yet)
+7. Choose a preview subdomain name (in our case, `rick-and-morty-example` was chosen)
+8. Test the deployment by opening the provided preview URL
+9. If everything looks good, you can publish the app with `eas deploy --prod`
+10. The app will be available at: https://rick-and-morty-example.expo.app
+
+Note the app is published as a single-page application (SPA), as set by the `app.json` file:
+
+```json
+{
+  "expo": {
+    "web": {
+      "output": "single",
+    }
+  }
+}
+```
+
+For more information, see: https://docs.expo.dev/eas/hosting/get-started
+
+## Initial template
+
+The app was initially created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app),
+which sets up the basic template of a Expo app with TypeScript support. The following line was then added 
+to the `package.json` file:
+
+```json
+"dependencies": {
+  "kiss-for-react": "^1.0.3",
+}
+```
+
+&nbsp;
+
+# The App Architecture
+
+The app uses the [Kiss state management](https://kissforreact.org) package to manage the app state and actions. Kiss is a complete but easy-to-use state management library for React and React Native that provides a simple way to manage application state with immutable objects and actions, similar to Redux, but much easier to use.
 
 ## The State
 

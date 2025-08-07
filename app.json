@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "rick-and-morty-example",
+    "description": "Example React app that demonstrates the Kiss State Management package.",
     "slug": "rick-and-morty-example",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,7 +21,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -37,6 +38,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "612cb388-b434-4934-a6f8-230b8e55ef04"
+      }
     }
   }
 }

@@ -66,7 +66,12 @@ function MainAppLayout() {
   const isDarkTheme = useIsDarkTheme();
   const windowWidth = Dimensions.get('window').width;
 
-  if (Platform.OS === 'web') {
+  // Detect if running on mobile web browser
+  const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && 
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent);
+
+  // Show phone skin only on desktop web, not mobile web
+  if (Platform.OS === 'web' && !isMobileWeb) {
     return (
       <View style={styles.webContainer}>
         <View style={styles.phoneDevice as ViewStyle}>

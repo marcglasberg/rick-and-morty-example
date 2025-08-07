@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ShowUserException, StoreProvider, createStore } from 'kiss-for-react';
 import React from 'react';
 import { Alert, Dimensions, Linking, Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
 export const userExceptionDialog: ShowUserException =
@@ -64,17 +65,49 @@ export default function RootLayout() {
 function MainAppLayout() {
 
   const isDarkTheme = useIsDarkTheme();
-  const windowWidth = Dimensions.get('window').width;
+  
+  // Initialize dimensions state
+  const [dimensions, setDimensions] = useState({
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  });
+
+  // Update dimensions on window resize (web only)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const handleResize = () => {
+        setDimensions({
+          width: Dimensions.get('window').width,
+          height: Dimensions.get('window').height,
+        });
+      };
+
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
+  const windowWidth = dimensions.width;
+  const windowHeight = dimensions.height;
 
   // Detect if running on mobile web browser
   const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && 
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent);
 
+  // Calculate scale factor to fit phone in viewport
+  const phoneHeight = 800;
+  const marginVertical = 40; // Total vertical margin (20 top + 20 bottom)
+  const availableHeight = windowHeight - marginVertical;
+  const scaleFactor = Math.min(1, availableHeight / phoneHeight);
+
   // Show phone skin only on desktop web, not mobile web
   if (Platform.OS === 'web' && !isMobileWeb) {
     return (
       <View style={styles.webContainer}>
-        <View style={styles.phoneDevice as ViewStyle}>
+        <View style={[
+          styles.phoneDevice as ViewStyle,
+          { transform: `scale(${scaleFactor})` }
+        ]}>
           {/* Phone frame */}
           <View style={styles.phoneFrame as ViewStyle}>
             {/* Notch */}
@@ -102,7 +135,7 @@ function MainAppLayout() {
         </View>
         
         {/* Footer info - only show when there's enough horizontal space (reload only) */}
-        {windowWidth > 900 && (
+        {windowWidth > 760 && (
           <View style={styles.webFooter as ViewStyle}>
             <Text style={styles.footerBold}>Rick and Morty Example</Text>            
             <View style={styles.footerLinks as ViewStyle}>              
@@ -175,6 +208,7 @@ const styles = StyleSheet.create({
     width: 400,
     height: 800,
     marginVertical: 20,
+    transformOrigin: 'center',
   },
   phoneFrame: {
     position: 'relative',

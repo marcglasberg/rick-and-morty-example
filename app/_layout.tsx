@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ShowUserException, StoreProvider, createStore } from 'kiss-for-react';
 import React from 'react';
-import { Alert, Platform, StyleSheet, View, ViewStyle, Dimensions } from 'react-native';
+import { Alert, Dimensions, Linking, Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import 'react-native-reanimated';
 
 export const userExceptionDialog: ShowUserException =
@@ -64,6 +64,7 @@ export default function RootLayout() {
 function MainAppLayout() {
 
   const isDarkTheme = useIsDarkTheme();
+  const windowWidth = Dimensions.get('window').width;
 
   if (Platform.OS === 'web') {
     return (
@@ -94,6 +95,47 @@ function MainAppLayout() {
             </View>
           </View>
         </View>
+        
+        {/* Footer info - only show when there's enough horizontal space (reload only) */}
+        {windowWidth > 900 && (
+          <View style={styles.webFooter as ViewStyle}>
+            <Text style={styles.footerBold}>Rick and Morty Example</Text>            
+            <View style={styles.footerLinks as ViewStyle}>              
+              <Text 
+                  style={styles.sourceCode} 
+                  onPress={() => Linking.openURL('https://github.com/marcglasberg/rick-and-morty-example')}
+                >Source code on Github</Text>
+            </View>
+            <Text style={styles.footerBullet}>React Native app using:</Text>
+            <View style={styles.footerLinks as ViewStyle}>
+              <Text style={styles.footerBullet}>• </Text>
+              <Text 
+                style={styles.footerLink} 
+                onPress={() => Linking.openURL('https://expo.dev')}
+              >
+                Expo
+              </Text>
+            </View>
+            <View style={styles.footerLinks as ViewStyle}>
+              <Text style={styles.footerBullet}>• </Text>
+              <Text 
+                style={styles.footerLink} 
+                onPress={() => Linking.openURL('https://kissforreact.org')}
+              >
+                Kiss state management
+              </Text>              
+            </View>
+            <View style={styles.footerLinks as ViewStyle}>
+              <Text style={styles.footerBullet}>• </Text>
+              <Text 
+                style={styles.footerLink} 
+                onPress={() => Linking.openURL('https://rickandmortyapi.com/')}
+              >
+                Rick and Morty API
+              </Text>              
+            </View>
+          </View>
+        )}
       </View>
     );
   }
@@ -185,6 +227,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderTopRightRadius: 2,
     borderBottomRightRadius: 2,
+  },
+  webFooter: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    maxWidth: 400,
+  },
+  footerText: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  footerBold: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 4,
+  },
+  footerBullet: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontSize: 14,
+    marginRight: 4,
+  },
+  footerLink: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  sourceCode: {
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    paddingBottom: 24,
   },
 });
 

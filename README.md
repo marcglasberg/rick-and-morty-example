@@ -66,7 +66,11 @@ The app follows a clean architecture pattern with the following directory struct
 
    ```bash
    npx expo start --web
-   ```      
+   ```     
+
+Note: _During development, when you edit the app files, it should reload automatically, both in the Expo Go app or web 
+browser. Under WSL (Windows Subsystem for Linux), the auto-reload may not work. If that happens, start the web server 
+(`npx expo start`) in the regular Windows terminal instead of WSL._
 
 ## Publishing the app to the web
 
@@ -86,7 +90,13 @@ This deployment was done with Expo's free EAS hosting service, following these s
 9. If everything looks good, you can publish the app with `eas deploy --prod`
 10. The app will be available at: https://rick-and-morty-example.expo.app
 
-Note the app is published as a single-page application (SPA), as set by the `app.json` file:
+If you change the app and want to publish a new version, run:
+
+1. In the terminal: `npx expo export --platform web`
+2. In the terminal: `eas deploy` or `eas deploy --prod`
+3. Go to https://rick-and-morty-example.expo.app and reload.
+
+Note, the app is published as a single-page application (SPA), as set by the `app.json` file:
 
 ```json
 {

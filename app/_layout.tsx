@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ShowUserException, StoreProvider, createStore } from 'kiss-for-react';
 import React from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
 export const userExceptionDialog: ShowUserException =
@@ -66,14 +66,33 @@ function MainAppLayout() {
   const isDarkTheme = useIsDarkTheme();
 
   return (
-    <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="card" options={{ headerShown: false }} />        
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style={isDarkTheme ? 'light' : 'dark'} />
-    </ThemeProvider>
+    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
+      <View style={Platform.OS === 'web' && styles.webContentWrapper}>
+        <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="card" options={{ headerShown: false }} />        
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style={isDarkTheme ? 'light' : 'dark'} />
+        </ThemeProvider>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  webContainer: {
+    backgroundColor: '#222222',
+    alignItems: 'center',
+  },
+  webContentWrapper: {
+    maxWidth: 400,
+    width: '100%',
+    flex: 1,
+  },
+});
 

@@ -43,7 +43,7 @@ The app follows a clean architecture pattern with the following directory struct
    npm install --legacy-peer-deps
    ```
 
-2. Start the app
+2. Start the app locally (in your local machine)
 
    ```bash
    npx expo start
@@ -62,7 +62,7 @@ The app follows a clean architecture pattern with the following directory struct
    * [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
    * [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 
-6. Alternatively, you can run the app locally (in your local machine) for the web only, with:
+6. Alternatively, you can run the app locally for the web only, with:
 
    ```bash
    npx expo start --web
@@ -111,6 +111,10 @@ to the `package.json` file:
   "kiss-for-react": "^1.0.3",
 }
 ```
+
+## DisclaimerThe Server
+
+This app uses the free [Rick and Morty API](https://rickandmortyapi.com/) to load images and character data. Sometimes the API is unavailable or unstable, which can cause the app to fail to load cards. In this case, try again later.
 
 &nbsp;
 

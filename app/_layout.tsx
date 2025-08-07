@@ -96,8 +96,8 @@ function MainAppLayout() {
 
   // Calculate scale factor to fit phone in viewport
   const phoneHeight = 800;
-  const containerPadding = 40; // 20px padding on each side from webContainer
-  const availableHeight = windowHeight - containerPadding;
+  const marginVertical = 40; // Total vertical margin (20 top + 20 bottom)
+  const availableHeight = windowHeight - marginVertical;
   const scaleFactor = Math.min(1, availableHeight / phoneHeight);
 
   // Show phone skin only on desktop web, not mobile web
@@ -106,7 +106,7 @@ function MainAppLayout() {
       <View style={styles.webContainer}>
         <View style={[
           styles.phoneDevice as ViewStyle,
-          { transform: `translate(-50%, -50%) scale(${scaleFactor})` }
+          { transform: `scale(${scaleFactor})` }
         ]}>
           {/* Phone frame */}
           <View style={styles.phoneFrame as ViewStyle}>
@@ -199,17 +199,16 @@ const styles = StyleSheet.create({
   webContainer: {
     flex: 1,
     backgroundColor: '#1a1a1a',
-    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
     minHeight: Dimensions.get('window').height,
   },
   phoneDevice: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+    position: 'relative',
     width: 400,
     height: 800,
-    transformOrigin: 'center center',
-    transform: 'translate(-50%, -50%)',
+    marginVertical: 20,
+    transformOrigin: 'center',
   },
   phoneFrame: {
     position: 'relative',

@@ -6,9 +6,8 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ShowUserException, StoreProvider, createStore } from 'kiss-for-react';
-import React from 'react';
-import { Alert, Dimensions, Linking, Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Alert, Dimensions, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
 export const userExceptionDialog: ShowUserException =
@@ -66,19 +65,28 @@ function MainAppLayout() {
 
   const isDarkTheme = useIsDarkTheme();
   
-  // Initialize dimensions state
-  const [dimensions, setDimensions] = useState({
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
+  // Initialize dimensions state - use consistent source
+  const [dimensions, setDimensions] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    }
+    return {
+      width: Dimensions.get('window').width,
+      height: Dimensions.get('window').height,
+    };
   });
 
   // Update dimensions on window resize (web only)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const handleResize = () => {
+        // Use window dimensions directly for accurate real-time values
         setDimensions({
-          width: Dimensions.get('window').width,
-          height: Dimensions.get('window').height,
+          width: window.innerWidth,
+          height: window.innerHeight,
         });
       };
 
@@ -88,40 +96,31 @@ function MainAppLayout() {
   }, []);
 
   const windowWidth = dimensions.width;
-  const windowHeight = dimensions.height;
 
   // Detect if running on mobile web browser
   const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && 
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent);
 
-  // Calculate scale factor to fit phone in viewport
-  const phoneHeight = 800;
-  const marginVertical = 40; // Total vertical margin (20 top + 20 bottom)
-  const availableHeight = windowHeight - marginVertical;
-  const scaleFactor = Math.min(1, availableHeight / phoneHeight);
-
   // Show phone skin only on desktop web, not mobile web
   if (Platform.OS === 'web' && !isMobileWeb) {
     return (
       <View style={styles.webContainer}>
-        <View style={[
-          styles.phoneDevice as ViewStyle,
-          { transform: `scale(${scaleFactor})` }
-        ]}>
+        {/* Phone device with pure CSS sizing */}
+        <View style={styles.phoneDevice}>
           {/* Phone frame */}
-          <View style={styles.phoneFrame as ViewStyle}>
+          <View style={styles.phoneFrame}>
             {/* Notch */}
-            <View style={styles.notch as ViewStyle} />
+            <View style={styles.notch} />
             
             {/* Volume buttons */}
-            <View style={styles.volumeUp as ViewStyle} />
-            <View style={styles.volumeDown as ViewStyle} />
+            <View style={styles.volumeUp} />
+            <View style={styles.volumeDown} />
             
             {/* Power button */}
-            <View style={styles.powerButton as ViewStyle} />
+            <View style={styles.powerButton} />
             
             {/* Screen area */}
-            <View style={styles.phoneScreen as ViewStyle}>
+            <View style={styles.phoneScreen}>
               <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
                 <Stack>
                   <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -132,20 +131,19 @@ function MainAppLayout() {
               </ThemeProvider>
             </View>
           </View>
-        </View>
-        
-        {/* Footer info - only show when there's enough horizontal space (reload only) */}
+        </View>        
+         
         {windowWidth > 760 && (
-          <View style={styles.webFooter as ViewStyle}>
+          <View style={styles.webFooter}>
             <Text style={styles.footerBold}>Rick and Morty Example</Text>            
-            <View style={styles.footerLinks as ViewStyle}>              
+            <View style={styles.footerLinks}>              
               <Text 
                   style={styles.sourceCode} 
                   onPress={() => Linking.openURL('https://github.com/marcglasberg/rick-and-morty-example')}
                 >Source code on Github</Text>
             </View>
             <Text style={styles.footerBullet}>React Native app using:</Text>
-            <View style={styles.footerLinks as ViewStyle}>
+            <View style={styles.footerLinks}>
               <Text style={styles.footerBullet}>• </Text>
               <Text 
                 style={styles.footerLink} 
@@ -154,7 +152,7 @@ function MainAppLayout() {
                 Expo
               </Text>
             </View>
-            <View style={styles.footerLinks as ViewStyle}>
+            <View style={styles.footerLinks}>
               <Text style={styles.footerBullet}>• </Text>
               <Text 
                 style={styles.footerLink} 
@@ -163,7 +161,7 @@ function MainAppLayout() {
                 Kiss state management
               </Text>              
             </View>
-            <View style={styles.footerLinks as ViewStyle}>
+            <View style={styles.footerLinks}>
               <Text style={styles.footerBullet}>• </Text>
               <Text 
                 style={styles.footerLink} 
@@ -179,7 +177,7 @@ function MainAppLayout() {
   }
 
   return (
-    <View style={styles.container as ViewStyle}>
+    <View style={styles.container}>
       <ThemeProvider value={isDarkTheme ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -201,14 +199,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: Dimensions.get('window').height,
+    padding: 20,
   },
   phoneDevice: {
-    position: 'relative',
     width: 400,
+    maxWidth: '90%',
     height: 800,
-    marginVertical: 20,
-    transformOrigin: 'center',
+    maxHeight: '90%',
+    aspectRatio: '400/800',
   },
   phoneFrame: {
     position: 'relative',

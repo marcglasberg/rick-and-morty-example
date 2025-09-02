@@ -326,12 +326,12 @@ humans and AI to understand and modify the app:
   It doesn't need to know about any business rules, about the server, the device, or 3rd-party services.
   It is completely isolated from those. All it can do is:
     - Arrow 1: Request parts of the state
-    - Arrow 2: Receive the requested parts of the state 
+    - Arrow 2: Receive the requested parts of the state
     - Arrow 3: Dispatch actions
     - Arrow 4: Get informed about actions that are running or that failed
     - Arrow 10: Get notified of state changes, so that it rebuilds
 
-* **In the middle of the diagram you can see the BUSINESS Layer.** 
+* **In the middle of the diagram you can see the BUSINESS Layer.**
   It doesn't need to know about how the UI is build, about the server, the device, or 3rd-party
   services. It is completely isolated from those. All it can do is:
     - Arrow 1: Receive requests from the UI, to send it parts of the state
@@ -345,8 +345,8 @@ humans and AI to understand and modify the app:
 * **To the left of the diagram you can see the DATA Layer.**
   It doesn't need to know about how the UI is build, and it doesn't need to know about business rules.
   It is completely isolated from those. All it can do is:
-  - Arrows 5 and 8: Receive a data request and reply to it
-  - Arrows 6 and 7: Contact the server and load from it
+    - Arrows 5 and 8: Receive a data request and reply to it
+    - Arrows 6 and 7: Contact the server and load from it
 
 ## The directories
 
@@ -394,9 +394,7 @@ is the action to toggle the like status of a card:
 export class ToggleLike extends Action {
 
   // Card ID to toggle
-  constructor(public cardId: string) {
-    super();
-  }
+  constructor(public cardId: string) { super(); }
 
   reduce() {
     // Toggle the card in likedCards
@@ -578,14 +576,7 @@ Likes are saved locally on the device. When reloading the app, liked cards remai
 Kiss's "persistor" feature, which saves the required parts of the state:
 
 ```typescript
-async
-persistDifference(_lastPersistedState
-:
-State | null, newState
-:
-State
-)
-{
+async persistDifference(_lastPersistedState: State | null, newState: State) {
 
   // Get liked cards from the new state
   let likedCards = newState.likedCards;
@@ -601,25 +592,20 @@ State
 On app startup, liked cards are read automatically:
 
 ```typescript
-async
-readState()
-:
-Promise < State | null > {
+async readState(): Promise < State | null > {
 
   // Read serialized JSON string
   let serialized = await AsyncStorage.getItem('state');
-  if(serialized === null
-)
-return null;
-
-// Deserialize JSON to a list of integers.
-let likedCardIds = JSON.parse(serialized);
-
-// Create a new LikedCards instance with the card IDs
-let likedCards = new LikedCards(likedCardIds);
-
-// Return a new state with the liked cards
-return State.initialState.copy({likedCards: likedCards});
+  if (serialized === null) return null;
+    
+  // Deserialize JSON to a list of integers.
+  let likedCardIds = JSON.parse(serialized);
+    
+  // Create a new LikedCards instance with the card IDs
+  let likedCards = new LikedCards(likedCardIds);
+    
+  // Return a new state with the liked cards
+  return State.initialState.copy({likedCards: likedCards});
 }
 ```
 

@@ -213,7 +213,7 @@ to the `package.json` file:
 }
 ```
 
-<details>
+</details>
 
 &nbsp;
 

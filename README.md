@@ -29,7 +29,7 @@ This repo is about building that kind of app.
 ## The problems we are meant to solve here
 
 <details>
-<summary>These are all the problems that were taken into consideration when architecting this app:</summary>
+<summary>Click here to see all the problems that were taken into consideration when architecting this app</summary>
 
 > Fuzzy architecture. No clear modules or layers. Everything imports everything. Too much global state. Separating local
 > state from server state. Prop drilling. Data passed through long chains of components, so small changes ripple.
@@ -53,7 +53,7 @@ This repo is about building that kind of app.
 </details>
 
 <details>
-<summary>And these are the **testing** problems that were taken into consideration:</summary>
+<summary>Click here to see the **testing** problems that were taken into consideration</summary>
 
 > Logic tied to React. Most rules live inside components or effects, not in pure functions you can import and test.
 > Tight coupling. Components reach into global singletons or contexts, so you need the whole app to render one test.
@@ -107,6 +107,9 @@ This app uses the free [Rick and Morty API](https://rickandmortyapi.com/) to loa
 the API is unavailable or unstable, which can cause the app to fail to load cards. In this case, try again later.
 
 ## Installation (optional)
+
+<details>
+<summary>Click here to see instalation instructions</summary>
 
 The app can be viewed running [here](https://rick-and-morty-example.expo.app/), but if you want to run it yourself,
 follow these steps:
@@ -210,6 +213,8 @@ to the `package.json` file:
 }
 ```
 
+<details>
+
 &nbsp;
 
 # The App Architecture
@@ -218,7 +223,7 @@ The app uses the [Kiss state management](https://kissforreact.org) package to ma
 a complete but easy-to-use state management library for React and React Native that provides a simple way to manage
 application state with immutable objects and actions, similar to Redux, but much easier to use.
 
-## The informtion flow
+## The information flow
 
 Here are the layers and how information flows in the app:
 

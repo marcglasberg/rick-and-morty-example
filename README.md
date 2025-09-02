@@ -111,6 +111,8 @@ the API is unavailable or unstable, which can cause the app to fail to load card
 <details>
 <summary>Click here to see instalation instructions</summary>
 
+&nbsp;
+
 The app can be viewed running [here](https://rick-and-morty-example.expo.app/), but if you want to run it yourself,
 follow these steps:
 
@@ -254,6 +256,8 @@ Here are the layers and how information flows in the app:
 
 10. All parts of the UI that depend on the modified state rebuild automatically, showing the updated data.
 
+&nbsp;
+
 ### In more detail
 
 Since the above explanation may feel a bit abstract, let's review it again in more detail and concrete code examples:
@@ -319,6 +323,8 @@ Since the above explanation may feel a bit abstract, let's review it again in mo
 9. The action completes by returning a new, modified app state. This becomes the new app state.
 
 10. All parts of the UI that use the modified state rebuild automatically, showing the updated data.
+
+&nbsp;
 
 ### Separation of concerns
 

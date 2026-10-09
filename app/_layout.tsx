@@ -135,14 +135,27 @@ function MainAppLayout() {
          
         {windowWidth > 760 && (
           <View style={styles.webFooter}>
-            <Text style={styles.footerBold}>Rick and Morty Example</Text>            
-            <View style={styles.footerLinks}>              
-              <Text 
-                  style={styles.sourceCode} 
+            <Text style={styles.footerBold}>Kiss State Management Demo</Text>
+            <Text style={[styles.footerText, { marginTop: 4 }]}>
+              The UI is intentionally plain. The point is the code:
+              see how simple and clean the architecture gets with Kiss.
+            </Text>
+            <View style={styles.footerLinks}>
+              <Text
+                  style={styles.sourceCode}
                   onPress={() => Linking.openURL('https://github.com/marcglasberg/rick-and-morty-example')}
-                >Source code on Github</Text>
+                >Read the source code on GitHub →</Text>
             </View>
             <Text style={styles.footerBullet}>React Native app using:</Text>
+            <View style={styles.footerLinks}>
+              <Text style={styles.footerBullet}>• </Text>
+              <Text
+                style={styles.footerLink}
+                onPress={() => Linking.openURL('https://kissforreact.org')}
+              >
+                Kiss state management
+              </Text>
+            </View>
             <View style={styles.footerLinks}>
               <Text style={styles.footerBullet}>• </Text>
               <Text 
@@ -151,15 +164,6 @@ function MainAppLayout() {
               >
                 Expo
               </Text>
-            </View>
-            <View style={styles.footerLinks}>
-              <Text style={styles.footerBullet}>• </Text>
-              <Text 
-                style={styles.footerLink} 
-                onPress={() => Linking.openURL('https://kissforreact.org')}
-              >
-                Kiss state management
-              </Text>              
             </View>
             <View style={styles.footerLinks}>
               <Text style={styles.footerBullet}>• </Text>
@@ -303,4 +307,3 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 });
-

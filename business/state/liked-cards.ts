@@ -7,7 +7,7 @@
  * independent of the card list.
  */
 export class LikedCards {
-  constructor(public readonly ids: number[] = []) { }
+  constructor(public readonly ids: readonly number[] = []) { }
 
   /** Checks if a card is liked (its ID is in the liked cards list). */
   isCardLiked(id: string | number): boolean {

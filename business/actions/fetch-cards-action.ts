@@ -34,7 +34,7 @@ export class FetchCards extends Action {
             // Add the newly fetched cards to the existing card list.
             let allCards = this.state.cardList.addCards(cards);
 
-            return (state: State) => this.state.copy({
+            return (state: State) => state.copy({
                 cardList: allCards,
                 totalCount: totalCount,
                 totalPages: totalPages,

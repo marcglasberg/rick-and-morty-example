@@ -99,7 +99,7 @@ export class RealDao extends Dao {
 
         } catch (error) {
             console.error('Error fetching Rick and Morty data:', error);
-            throw new UserException('Failed to fetch Rick and Morty data: ' + error);
+            throw new UserException('Failed to fetch Rick and Morty data: ' + error).withHardCause(error);
         }
     }
 }

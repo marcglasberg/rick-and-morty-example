@@ -29,12 +29,12 @@ const HEADER_OPACITY_SCROLL_DISTANCE = 200;
 // Create an animated version of FlatList
 const AnimatedFlatList = Animated.createAnimatedComponent<FlatListProps<any>>(FlatList);
 
-type Props<T> = Omit<FlatListProps<T>, 'renderItem'> & {
+type Props<T> = Omit<FlatListProps<T>, 'renderItem' | 'data'> & {
   headerImage: ReactElement;
   headerBackgroundColor: { dark: string; light: string };
   headerActions?: ReactElement;
   renderItem: ListRenderItem<T>;
-  data: T[];
+  data: readonly T[];
   keyExtractor: (item: T, index: number) => string;
   ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
   ListFooterComponent?: React.ComponentType<any> | React.ReactElement | null;

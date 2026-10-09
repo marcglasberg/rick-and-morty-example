@@ -3,12 +3,12 @@ import { LikedCards } from "./liked-cards";
 
 export class State {
   
-  cardList: CardList; // List of cards of type `Card`
-  selectedCardId: string | null; // Last card we tapped to view details
-  totalCount: number; // Total number of cards
-  totalPages: number; // Total number of pages of 20 cards each
-  likedCards: LikedCards; // List of the IDs of liked cards 
-  colorScheme: 'light' | 'dark' | null;
+  readonly cardList: CardList; // List of cards of type `Card`
+  readonly selectedCardId: string | null; // Last card we tapped to view details
+  readonly totalCount: number; // Total number of cards
+  readonly totalPages: number; // Total number of pages of 20 cards each
+  readonly likedCards: LikedCards; // List of the IDs of liked cards 
+  readonly colorScheme: 'light' | 'dark' | null;
 
   constructor({
     cardList = CardList.empty,

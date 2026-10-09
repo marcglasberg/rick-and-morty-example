@@ -2,7 +2,7 @@ import { Card } from "./card";
 
 /** Represents a list of cards. */
 export class CardList {
-  constructor(public readonly items: Card[] = []) { }
+  constructor(public readonly items: readonly Card[] = []) { }
 
   get length(): number {
     return this.items.length;

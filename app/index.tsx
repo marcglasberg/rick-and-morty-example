@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Href } from 'expo-router/build/typed-routes/types';
 import { useDispatch, useIsWaiting, useSelect } from 'kiss-for-react';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, TouchableHighlight, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,21 +28,20 @@ function cardRoute(cardId: string): Href {
 }
 
 export default function HomeScreen() {
-  const cards: Card[] = useSelect((state: State) => state.cardList.items);
+  const cards: readonly Card[] = useSelect((state: State) => state.cardList.items);
   const totalCount: number = useSelect((state: State) => state.totalCount);
   const nextPage: number | null = useSelect((state: State) => state.nextPage());
   const likedCards = useSelect((state: State) => state.likedCards);
   const isLoading: boolean = useIsWaiting(FetchCards);
-  const dispatch = useDispatch();
+  // Fetches the first page of cards when the screen mounts. This
+  // only runs after the store is ready (persisted state loaded).
+  const dispatch = useDispatch({
+    onMount: (store) => store.dispatch(new FetchCards()),
+  });
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const isDarkTheme = useIsDarkTheme();
-
-  useEffect(() => {
-    dispatch(new FetchCards());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleCardPress = (cardId: string) => {
     // Note: Checking `router.canGoBack()` prevents double-tapping 

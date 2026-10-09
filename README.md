@@ -2,9 +2,9 @@
 
 This **Rick and Morty Example** is an example of a React Native application using:
 
-* [Expo](https://expo.dev)
 * [Kiss state management](https://kissforreact.org) package
 * [Rick and Morty API](https://rickandmortyapi.com/) with GraphQL
+* [Expo](https://expo.dev)
 
 View it running here: https://rick-and-morty-example.expo.app/
 
@@ -210,7 +210,7 @@ to the `package.json` file:
 ```json
 {
   "dependencies": {
-    "kiss-for-react": "^1.0.3"
+    "kiss-for-react": "^2.0.0"
   }
 }
 ```

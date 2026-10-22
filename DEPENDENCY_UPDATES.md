@@ -27,7 +27,7 @@ Clean validation initially disabled install lifecycle scripts (`npm ci --ignore-
 ## Application compatibility changes
 
 - Use the public Router API and SDK 56+ Router-owned navigation entry points; remove unused direct React Navigation packages.
-- Gate rapid card presses immediately because Router 58 queues navigation until commit. Reset the gate when Back focuses Home again. A real Router test reproduces the double-opening failure without the immediate guard, then verifies single-Back recovery and re-opening with the guard. Keep the nested `[id]` screen name consistent with its layout.
+- Gate rapid card presses immediately because Router 58 queues navigation until commit. Reset the gate when Back focuses Home again. Real Router tests reproduce the double-opening failure without the immediate guard, then verify single-Back recovery and re-opening with the guard. Cold valid/invalid detail URLs use the actual detail screen, choose Home and successfully open another card even when navigation history remains. A synchronous pre-navigation failure releases the gate and is rethrown; fault injection verifies that retry remains possible. Keep the nested `[id]` screen name consistent with its layout.
 - Preserve native AsyncStorage persistence when no browser `window` exists, while skipping storage during web server rendering. Keep the existing `state` key and serialized liked-card IDs.
 - Use React's hydration snapshot API for theme initialization. Apply browser safe-area spacing through CSS while native screens retain their inset hooks.
 - Preserve the generic animated list, including configurable `CellRendererComponent`. Reanimated's `Animated.FlatList` excludes that prop, so the supported `createAnimatedComponent` wrapper remains; revisit it if that convenience component gains equivalent support.
@@ -35,7 +35,7 @@ Clean validation initially disabled install lifecycle scripts (`npm ci --ignore-
 
 ## Validation and remaining release gates
 
-SDK 54 passed official dependency alignment, typecheck and the original 22 tests. SDK 55 exposed type migrations fixed before SDK 56; the original 22 tests passed throughout. SDKs 56 and 57 passed alignment/typecheck/tests after the relevant changes. SDK 58 passed Expo Doctor 20/20, clean npm ci, npm ls (no invalid peers), typecheck, strict lint, all 25 tests (including a real-Router regression test) and local Android/iOS/web bundle export.
+SDK 54 passed official dependency alignment, typecheck and the original 22 tests. SDK 55 exposed type migrations fixed before SDK 56; the original 22 tests passed throughout. SDKs 56 and 57 passed alignment/typecheck/tests after the relevant changes. SDK 58 passed Expo Doctor 20/20, clean npm ci, npm ls (no invalid peers), typecheck, strict lint, all 28 tests (including four real-Router navigation regression cases) and local Android/iOS/web bundle export.
 
 Real Chrome testing used the exported app and the public GraphQL API: character loading, detail navigation, favorites reflected on Home, persistence after reload, theme switching, pagination to page 2 and single-Back recovery after rapid double press passed. The last viewport/invalid-ID browser checks were interrupted when Chrome disconnected; they are not certified. Direct detail links without loaded card data retain the existing "Card not found / Deep Linking not implemented" behavior; this migration does not add deep-link fetching. Offline/retry behavior remains covered by the existing action tests, with full device network-loss testing still required.
 

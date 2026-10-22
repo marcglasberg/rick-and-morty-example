@@ -16,11 +16,18 @@ export function useOpenCard() {
   }, []));
 
   return (cardId: string) => {
-    if (!openingCard.current && !router.canGoBack()) {
+    // Home can legitimately retain history after a cold detail -> Home visit.
+    // History is not a duplicate-press signal; the immediate gate is.
+    if (!openingCard.current) {
       openingCard.current = true;
-      triggerHaptic('medium');
-      dispatch(new SelectCard(cardId));
-      router.push({ pathname: '/card/[id]', params: { id: cardId } } satisfies Href);
+      try {
+        triggerHaptic('medium');
+        dispatch(new SelectCard(cardId));
+        router.push({ pathname: '/card/[id]', params: { id: cardId } } satisfies Href);
+      } catch (error) {
+        openingCard.current = false;
+        throw error;
+      }
     }
   };
 }

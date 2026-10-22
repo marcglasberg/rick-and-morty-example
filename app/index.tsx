@@ -1,5 +1,4 @@
 import { FetchCards } from '@/business/actions/fetch-cards-action';
-import { SelectCard } from '@/business/actions/select-card-actions';
 import { ToggleLike } from '@/business/actions/toggle-like-action';
 import { ToggleTheme } from '@/business/actions/toggle-theme-action';
 import { Card } from '@/business/state/card';
@@ -9,23 +8,14 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useIsDarkTheme, useTheme } from '@/hooks/useTheme';
+import { useOpenCard } from '@/hooks/useOpenCard';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Href } from 'expo-router/build/typed-routes/types';
 import { useDispatch, useIsWaiting, useSelect } from 'kiss-for-react';
 import React from 'react';
 import { StyleSheet, TouchableHighlight, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// Helper to generate typed routes for cards.
-function cardRoute(cardId: string): Href {
-  return {
-    pathname: "/card/[id]",
-    params: { id: cardId }
-  };
-}
 
 export default function HomeScreen() {
   const cards: readonly Card[] = useSelect((state: State) => state.cardList.items);
@@ -38,20 +28,11 @@ export default function HomeScreen() {
   const dispatch = useDispatch({
     onMount: (store) => store.dispatch(new FetchCards()),
   });
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const isDarkTheme = useIsDarkTheme();
 
-  const handleCardPress = (cardId: string) => {
-    // Note: Checking `router.canGoBack()` prevents double-tapping 
-    // the card to open the details scren card twice.
-    if (!router.canGoBack()) {
-      triggerHaptic('medium');
-      dispatch(new SelectCard(cardId));
-      router.push(cardRoute(cardId));
-    }
-  };
+  const handleCardPress = useOpenCard();
 
   const handleLikePress = (cardId: string, event: any) => {
     event.stopPropagation();

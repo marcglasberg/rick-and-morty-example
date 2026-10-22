@@ -18,6 +18,10 @@ import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 import { useTheme } from '@/hooks/useTheme';
 import { useDispatch, useIsFailed } from 'kiss-for-react';
 
+// Keep FlatList's custom CellRendererComponent support. Reanimated's convenience
+// Animated.FlatList intentionally excludes that configurable native prop.
+const AnimatedFlatList = Animated.createAnimatedComponent<any>(FlatList);
+
 const HEADER_HEIGHT = 250;
 
 // Header content moves at half the scroll speed
@@ -26,8 +30,6 @@ const PARALLAX_FACTOR = 0.5;
 // Distance over which opacity changes
 const HEADER_OPACITY_SCROLL_DISTANCE = 200; 
 
-// Create an animated version of FlatList
-const AnimatedFlatList = Animated.createAnimatedComponent<FlatListProps<any>>(FlatList);
 
 type Props<T> = Omit<FlatListProps<T>, 'renderItem' | 'data'> & {
   headerImage: ReactElement;
@@ -64,7 +66,7 @@ export default function ParallaxScrollView<T>({
   const theme = useTheme();          
   const isFetchCardsFailed: boolean = useIsFailed(FetchCards);
   const scrollY = useSharedValue(0);
-  const flatListRef = useAnimatedRef<FlatList>();
+  const flatListRef = useAnimatedRef<FlatList<T>>();
   const bottom = useBottomTabOverflow();
   const insets = useSafeAreaInsets();
   

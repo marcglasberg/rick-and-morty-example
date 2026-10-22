@@ -13,7 +13,7 @@ The existing file dependencies intentionally require these exact artifacts in a 
 - `../kiss-for-react/kiss-for-react-2.0.0.tgz`, integrity `sha512-k4gONqQTkjG8uzrv7I66eWUAEq3EbJKSvZ8AbcxVtE+OH8SXTO4qiBfERliDBIVQtPbCLnY/JGgaiqksfBXHgA==`.
 - `../kiss-for-react/eslint-plugin/eslint-plugin-kiss-for-react-1.0.0.tgz`, integrity `sha512-jYYgTGVaOAfcvQkcay0kDRKwL7u9997TB/mtkPavAv9x8jodvrvW20yP6EjADLS6KL3Rqn4vGReWxq3wZl8LVA==`.
 
-Obtain the existing release artifacts before installation. A fresh clone of this repository alone does not contain them. Packing today's changed Kiss source under the same filename is not equivalent: npm validates the locked integrity. The migration preserves both identities and does not change the sibling library or its TypeScript 6.0.3 constraint.
+Obtain the preserved local artifact files from their owner before installation. The official npm registry returned 404 for kiss-for-react@2.0.0 and eslint-plugin-kiss-for-react@1.0.0 during this validation; these exact inputs cannot currently be fetched as published npm versions. A fresh clone of this repository alone does not contain them. Packing today's changed Kiss source under the same filename is not equivalent: npm validates the locked integrity. The migration preserves both identities and does not change the sibling library or its TypeScript 6.0.3 constraint.
 
 ```sh
 npm ci

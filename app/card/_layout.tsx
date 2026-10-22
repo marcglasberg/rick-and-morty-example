@@ -8,7 +8,7 @@ export default function CardLayout() {
       }}
     >      
       <Stack.Screen name="index" />
-      <Stack.Screen name="[id]/index" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 }

@@ -116,18 +116,16 @@ the API is unavailable or unstable, which can cause the app to fail to load card
 The app can be viewed running [here](https://rick-and-morty-example.expo.app/), but if you want to run it yourself,
 follow these steps:
 
-1. Install dependencies
+1. Follow [Expo setup and validation](DEPENDENCY_UPDATES.md), including the two existing sibling Kiss tarballs.
+   Use a patched supported Node release (validated with Node 24.22.1), then install the locked dependency graph:
 
    ```bash
-   npm install
+   npm ci
+   npm run validate
    ```
 
-   Note: If you encounter dependency issues, that's common with React Native projects and Expo apps when there are minor
-   version mismatches between peer dependencies. In this case, try:
-
-   ```bash
-   npm install --legacy-peer-deps
-   ```
+   Investigate dependency mismatches with `npx expo install --check` and `npx expo-doctor`.
+   Do not bypass peer checks with `--force` or `--legacy-peer-deps`.
 
 2. Start the app locally (in your local machine)
 
@@ -137,10 +135,10 @@ follow these steps:
 
    You'll see a QR code in the output.
 
-3. Android: Install the **Expo Go** app on your phone. It's available on the Play Store. Open the app and click "Scan QR
+3. Android: Use an SDK 58 development build, or **Expo Go** once an SDK 58-compatible release is available on your phone. It's available on the Play Store. Open the app and click "Scan QR
    Code" to scan the QR code.
 
-4. iOS: Install the **Expo Go** app on your phone. It's available on the App Store. Then, open your device camera and
+4. iOS: Use an SDK 58 development build, or **Expo Go** once an SDK 58-compatible release is available on your phone. It's available on the App Store. Then, open your device camera and
    tap the link that appears.
 
 5. Alternatively, you can run the app in an Android emulator or iOS simulator, or create a development build. More

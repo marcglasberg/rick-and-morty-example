@@ -12,7 +12,7 @@ import { useOpenCard } from '@/hooks/useOpenCard';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useDispatch, useIsWaiting, useSelect } from 'kiss-for-react';
+import { useDispatch, useIsWaiting, useSelect, useStoreEffect } from 'kiss-for-react';
 import React from 'react';
 import { StyleSheet, TouchableHighlight, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,9 +25,10 @@ export default function HomeScreen() {
   const isLoading: boolean = useIsWaiting(FetchCards);
   // Fetches the first page of cards when the screen mounts. This
   // only runs after the store is ready (persisted state loaded).
-  const dispatch = useDispatch({
+  useStoreEffect({
     onMount: (store) => store.dispatch(new FetchCards()),
   });
+  const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const isDarkTheme = useIsDarkTheme();

@@ -1,19 +1,14 @@
 # Expo 58 migration and dependency maintenance
 
-This app now directly declares Expo `~58.0.17`, React/React DOM `19.3.0`, React Native `0.88.0`, Router `~58.0.25`, Reanimated `4.7.1` and Worklets `0.13.0`. Native dependency versions follow the published Expo SDK compatibility map. The migration was staged through SDKs 54, 55, 56, 57 and 58; do not independently upgrade React Native or native modules outside their supported SDK pairing.
+This app now directly declares Expo `~58.0.21`, React/React DOM `19.3.0`, React Native `0.88.0`, Router `~58.0.28`, Reanimated `4.7.1` and Worklets `0.13.0`. Native dependency versions follow the published Expo SDK compatibility map. The migration was staged through SDKs 54, 55, 56, 57 and 58; do not independently upgrade React Native or native modules outside their supported SDK pairing.
 
-The final graph resolves Expo CLI 58.1.14, expo-server 58.0.5 and fetch-nodeshim 0.4.10. It has no installed `undici` package and needs no Undici override. This does not certify every dependency as vulnerability-free.
+The final graph resolves Expo CLI 58.1.17, expo-server 58.0.6 and fetch-nodeshim 0.4.10. It has no installed `undici` package and needs no Undici override. This does not certify every dependency as vulnerability-free.
 
 ## Reproducible setup
 
 Use a patched supported Node line. Validation used portable Node 24.22.1; no host runtime was changed. Expo's lower engine minimum is not a security patch guarantee.
 
-The existing file dependencies intentionally require these exact artifacts in a sibling Kiss checkout:
-
-- `../kiss-for-react/kiss-for-react-2.0.0.tgz`, integrity `sha512-k4gONqQTkjG8uzrv7I66eWUAEq3EbJKSvZ8AbcxVtE+OH8SXTO4qiBfERliDBIVQtPbCLnY/JGgaiqksfBXHgA==`.
-- `../kiss-for-react/eslint-plugin/eslint-plugin-kiss-for-react-1.0.0.tgz`, integrity `sha512-jYYgTGVaOAfcvQkcay0kDRKwL7u9997TB/mtkPavAv9x8jodvrvW20yP6EjADLS6KL3Rqn4vGReWxq3wZl8LVA==`.
-
-Obtain the preserved local artifact files from their owner before installation. The official npm registry returned 404 for kiss-for-react@2.0.0 and eslint-plugin-kiss-for-react@1.0.0 during this validation; these exact inputs cannot currently be fetched as published npm versions. A fresh clone of this repository alone does not contain them. Packing today's changed Kiss source under the same filename is not equivalent: npm validates the locked integrity. The migration preserves both identities and does not change the sibling library or its TypeScript 6.0.3 constraint.
+`kiss-for-react` (`^2.0.3`) and `eslint-plugin-kiss-for-react` (`^1.0.1`) are installed from the npm registry. A fresh clone needs no sibling Kiss checkout or local `.tgz` files.
 
 ```sh
 npm ci
@@ -45,13 +40,14 @@ Before shipping, build and exercise the real Android/iOS application identity on
 
 ## Remaining advisory exposure
 
-`npm audit` reports 48 affected package entries (30 high, 18 moderate), propagated from three advisory roots. As checked on 2026-10-22, all three official advisories list no patched version:
+`npm audit` reports 16 affected package entries (3 high, 13 low), propagated from two advisory roots. As checked on 2026-10-28, neither has a fix compatible with this SDK pairing:
 
 | Installed dependency | Advisory and prerequisites | Exposure found here |
 | --- | --- | --- |
-| braces 3.0.3 | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm): attacker-controlled deeply nested brace patterns exhaust the stack. Published September 18. | Metro/Jest/glob tooling. No app-input path to the parser identified. |
-| node-forge 1.4.0 | [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv): malformed RSA PKCS#1 v1.5 signatures with low-exponent keys. Published September 3. | Expo CLI code-signing certificate tooling; no app RSA verification path identified. |
-| sprintf-js 1.0.3 | [GHSA-hp3w-g68c-fv3c](https://github.com/advisories/GHSA-hp3w-g68c-fv3c): attacker-controlled format precision can throw. Published September 24. | argparse/js-yaml/Jest tooling. No app-controlled format-string path identified. |
+| zod 3.25.76 | [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5): validating oversized constrained collections can exhaust memory. Fixed only in zod 4.6.6; the latest `@expo/cli` (58.1.17) still requires zod `^3.25.76`. | Expo CLI tooling. No app-input path to its validation identified. |
+| deepmerge 4.3.1 | [GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4): `mergeObject()` allows prototype poisoning of returned objects. 4.3.1 is the latest published version. | `@expo/config` and `jest-config` configuration merging. No app-input path identified. |
+
+The earlier braces, node-forge and sprintf-js advisories (checked 2026-10-22) are no longer reported.
 
 These are unresolved version findings, not proof of exploitation or a clean security audit. Do not run `npm audit fix --force`: its suggested old Expo/Jest downgrades are incompatible with this SDK pairing. Avoid untrusted build configurations/patterns and keep dev tooling private. Recheck upstream fixes and update compatible parent packages when patches become available.
 

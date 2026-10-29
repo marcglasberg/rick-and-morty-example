@@ -361,7 +361,7 @@ Since the above explanation may feel a bit abstract, let's review it again in mo
    ```
 
 4. The UI can ask to be notified when an action is running, by using the `useIsWaiting` hook. It can then show a
-   progress indicator. Example, the `isLoading` selector in `app/index.tsx`:
+   progress indicator. Example, the `isLoading` selector in `components/ParallaxScrollView.tsx`:
    ```typescript
    const isLoading = useIsWaiting(FetchCards);    
    ``` 
@@ -713,7 +713,8 @@ implementing infinite scrolling.
 
 We use Kiss's hooks:
 
-* `const isLoading = useIsWaiting(FetchCards);` to show a "Loading Cards..." message when cards are being fetched.
+* `const isLoading = useIsWaiting(FetchCards);` to show a "Loading page..." message with a spinner while a page of
+  cards is being fetched.
 
 * `const isFetchCardsFailed = useIsFailed(FetchCards);` to show a "Retry" button if the fetch fails.
 

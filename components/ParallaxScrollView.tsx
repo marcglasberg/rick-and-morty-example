@@ -1,4 +1,4 @@
-import { ReactElement, useCallback } from 'react';
+import { ReactElement } from 'react';
 import { ActivityIndicator, Button, FlatList, FlatListProps, ListRenderItem, StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -12,11 +12,12 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FetchCards } from '@/business/actions/fetch-cards-action';
+import { State } from '@/business/state/state';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 import { useTheme } from '@/hooks/useTheme';
-import { useDispatch, useIsFailed } from 'kiss-for-react';
+import { useDispatch, useIsFailed, useIsWaiting, useSelect } from 'kiss-for-react';
 
 // Keep FlatList's custom CellRendererComponent support. Reanimated's convenience
 // Animated.FlatList intentionally excludes that configurable native prop.
@@ -44,7 +45,6 @@ type Props<T> = Omit<FlatListProps<T>, 'renderItem' | 'data'> & {
   contentContainerStyle?: FlatListProps<T>['contentContainerStyle'];
   minHeaderOpacity?: number; 
   loadMoreCallback?: () => void; 
-  nextPage?: number | null; 
 };
 
 export default function ParallaxScrollView<T>({
@@ -60,10 +60,10 @@ export default function ParallaxScrollView<T>({
   contentContainerStyle,
   minHeaderOpacity = 0.0, // Default minimum opacity when fully scrolled
   loadMoreCallback,
-  nextPage = null, 
   ...flatListProps
 }: Props<T>) {
   const theme = useTheme();          
+  const isLoading: boolean = useIsWaiting(FetchCards);
   const isFetchCardsFailed: boolean = useIsFailed(FetchCards);
   const scrollY = useSharedValue(0);
   const flatListRef = useAnimatedRef<FlatList<T>>();
@@ -131,71 +131,42 @@ export default function ParallaxScrollView<T>({
     };
   });      
 
-  // The "loading cards" indicator, with a spinner.
-  const LoadingFooterComponent = () => (
-    <ThemedView style={styles.loadingFooter}>
-      <ActivityIndicator size="small" />
-      <ThemedText style={styles.loadingText}>
-        Loading page {nextPage}
-      </ThemedText>
-    </ThemedView>
-  );
-
-  // Manual retry button, when fetching cards fails.
-  const ManualRetryComponent = () => {             
-    const dispatch = useDispatch();
-    
-    return (
-      <ThemedView style={styles.retryContainer}>
-        <ThemedText style={styles.retryText}>
-          Failed to load cards
-        </ThemedText>
-        <Button 
-          title="Retry" 
-          onPress={() => dispatch(new FetchCards())}
-        />
-      </ThemedView>
-    );
-  };
-
-  // Create a header component with the parallax effect.
-  const HeaderComponent = useCallback(() => {
-    return (
-      <>
-        {/* Parallax header - full width, no margins */}
+  // The header with the parallax effect.
+  const header = (
+    <>
+      {/* Parallax header - full width, no margins */}
+      <Animated.View style={[
+        styles.headerContainer,
+        { backgroundColor: headerBackgroundColor[theme] },
+        headerOpacityStyle
+      ]}>
+        {/* The header content that moves at a different speed than the scroll */}
         <Animated.View style={[
-          styles.headerContainer, 
-          { backgroundColor: headerBackgroundColor[theme] },
-          headerOpacityStyle
+          styles.headerContentContainer,
+          headerContentAnimatedStyle
         ]}>
-          {/* The header content that moves at a different speed than the scroll */}
-          <Animated.View style={[
-            styles.headerContentContainer, 
-            headerContentAnimatedStyle
-          ]}>
-            {headerImage}
-          </Animated.View>
-          
-          {headerActions && (
-            <View style={[
-              styles.headerActions,
-              { paddingTop: insets.top > 0 ? insets.top : 0 }
-            ]}>
-              {headerActions}
-            </View>
-          )}
+          {headerImage}
         </Animated.View>
-        
-        {/* Container for the rest of the content with horizontal padding */}
-        <View style={styles.contentContainer}>
-          {/* The actual content following the header - separate from the parallax header */}
-          {ListHeaderComponent && (typeof ListHeaderComponent === 'function' 
-            ? <ListHeaderComponent /> 
-            : ListHeaderComponent)}
-        </View>
-      </>
-    );
-  }, [ListHeaderComponent, headerImage, headerActions, headerBackgroundColor, theme, insets.top, headerContentAnimatedStyle, headerOpacityStyle]);
+
+        {headerActions && (
+          <View style={[
+            styles.headerActions,
+            { paddingTop: insets.top > 0 ? insets.top : 0 }
+          ]}>
+            {headerActions}
+          </View>
+        )}
+      </Animated.View>
+
+      {/* Container for the rest of the content with horizontal padding */}
+      <View style={styles.contentContainer}>
+        {/* The actual content following the header - separate from the parallax header */}
+        {ListHeaderComponent && (typeof ListHeaderComponent === 'function'
+          ? <ListHeaderComponent />
+          : ListHeaderComponent)}
+      </View>
+    </>
+  );
   return (
     <ThemedView style={styles.container}>
       <AnimatedFlatList
@@ -212,10 +183,46 @@ export default function ParallaxScrollView<T>({
             paddingTop: 0,
           },
           contentContainerStyle,
-        ]}          ListHeaderComponent={HeaderComponent}
-        ListFooterComponent={isFetchCardsFailed ? ManualRetryComponent : nextPage !== null ? LoadingFooterComponent : ListFooterComponent}
+        ]}
+        ListHeaderComponent={header}
+        ListFooterComponent={isFetchCardsFailed
+          ? <ManualRetryFooter />
+          : isLoading
+            ? <LoadingFooter />
+            : ListFooterComponent}
         ListEmptyComponent={ListEmptyComponent}
         {...flatListProps}
+      />
+    </ThemedView>
+  );
+}
+
+// The "loading cards" indicator, with a spinner.
+function LoadingFooter() {
+  const nextPage: number | null = useSelect((state: State) => state.nextPage());
+
+  return (
+    <ThemedView style={styles.loadingFooter}>
+      <ActivityIndicator size="small" />
+      <ThemedText style={styles.loadingText}>
+        Loading page {nextPage}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+// Manual retry button, when fetching cards fails.
+function ManualRetryFooter() {
+  const dispatch = useDispatch();
+
+  return (
+    <ThemedView style={styles.retryContainer}>
+      <ThemedText style={styles.retryText}>
+        Failed to load cards
+      </ThemedText>
+      <Button
+        title="Retry"
+        onPress={() => dispatch(new FetchCards())}
       />
     </ThemedView>
   );

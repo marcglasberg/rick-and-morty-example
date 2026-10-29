@@ -12,17 +12,13 @@ import { useOpenCard } from '@/hooks/useOpenCard';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useDispatch, useIsWaiting, useSelect, useStoreEffect } from 'kiss-for-react';
+import { useDispatch, useSelect, useStoreEffect } from 'kiss-for-react';
 import React from 'react';
 import { StyleSheet, TouchableHighlight, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const cards: readonly Card[] = useSelect((state: State) => state.cardList.items);
-  const totalCount: number = useSelect((state: State) => state.totalCount);
-  const nextPage: number | null = useSelect((state: State) => state.nextPage());
-  const likedCards = useSelect((state: State) => state.likedCards);
-  const isLoading: boolean = useIsWaiting(FetchCards);
   // Fetches the first page of cards when the screen mounts. This
   // only runs after the store is ready (persisted state loaded).
   useStoreEffect({
@@ -34,12 +30,6 @@ export default function HomeScreen() {
   const isDarkTheme = useIsDarkTheme();
 
   const handleCardPress = useOpenCard();
-
-  const handleLikePress = (cardId: string, event: any) => {
-    event.stopPropagation();
-    triggerHaptic('medium');
-    dispatch(new ToggleLike(cardId));
-  };
 
   const renderCard = ({ item }: { item: Card }) => {
     const transparentColor = 'rgba(0, 0, 0, 0)';
@@ -85,16 +75,7 @@ export default function HomeScreen() {
                   styles.expandedText
                 ]}>
                   {item.species}</ThemedText>
-                <TouchableOpacity
-                  style={styles.likeButton}
-                  onPress={(event) => handleLikePress(item.id, event)}
-                >
-                  <Ionicons
-                    name={likedCards.isCardLiked(item.id) ? "heart" : "heart-outline"}
-                    size={32}
-                    color={likedCards.isCardLiked(item.id) ? "#ff4b4b" : (isDarkTheme ? "#fff" : "#000")}
-                  />
-                </TouchableOpacity>
+                <LikeButton cardId={item.id} />
               </View>
             </LinearGradient>
           </View>
@@ -108,29 +89,11 @@ export default function HomeScreen() {
     dispatch(new ToggleTheme({ currentTheme: theme }));
   };
 
-  const HeaderContent = () => (
-    <>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.cardListContainer}>
-        <ThemedText type="subtitle" style={styles.cardListTitle}>
-          {totalCount} cards available
-        </ThemedText>
-      </ThemedView>
-    </>
-  );
-
   // Component for when there are no items.
   const EmptyComponent = () => null;
 
-  const handleLoadMore = () => {
-    // Only trigger loading more if we're not already loading.
-    if (!isLoading) {
-      dispatch(new FetchCards());
-    }
-  };
+  // FetchCards is non-reentrant, so this is ignored while a page is loading.
+  const handleLoadMore = () => dispatch(new FetchCards());
 
   return (
     <ParallaxScrollView
@@ -140,7 +103,6 @@ export default function HomeScreen() {
       ListHeaderComponent={HeaderContent}
       ListEmptyComponent={EmptyComponent}
       loadMoreCallback={handleLoadMore}
-      nextPage={nextPage}
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
@@ -166,6 +128,48 @@ export default function HomeScreen() {
         </TouchableOpacity>
       }
     />
+  );
+}
+
+function HeaderContent() {
+  const totalCount: number = useSelect((state: State) => state.totalCount);
+
+  return (
+    <>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+      </ThemedView>
+
+      <ThemedView style={styles.cardListContainer}>
+        <ThemedText type="subtitle" style={styles.cardListTitle}>
+          {totalCount} cards available
+        </ThemedText>
+      </ThemedView>
+    </>
+  );
+}
+
+// The like button of a single card.
+function LikeButton({ cardId }: { cardId: string }) {
+  const isLiked: boolean = useSelect((state: State) => state.likedCards.isCardLiked(cardId));
+  const isDarkTheme = useIsDarkTheme();
+  const dispatch = useDispatch();
+
+  return (
+    <TouchableOpacity
+      style={styles.likeButton}
+      onPress={(event) => {
+        event.stopPropagation();
+        triggerHaptic('medium');
+        dispatch(new ToggleLike(cardId));
+      }}
+    >
+      <Ionicons
+        name={isLiked ? "heart" : "heart-outline"}
+        size={32}
+        color={isLiked ? "#ff4b4b" : (isDarkTheme ? "#fff" : "#000")}
+      />
+    </TouchableOpacity>
   );
 }
 

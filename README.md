@@ -116,8 +116,8 @@ the API is unavailable or unstable, which can cause the app to fail to load card
 The app can be viewed running [here](https://rick-and-morty-example.expo.app/), but if you want to run it yourself,
 follow these steps:
 
-1. Follow [Expo setup and validation](DEPENDENCY_UPDATES.md). Use a patched supported Node release (validated with
-   Node 24.22.1), then install the locked dependency graph:
+1. Use a patched supported Node release (validated with Node 24.22.1), then install the locked
+   dependency graph:
 
    ```bash
    npm ci
@@ -125,7 +125,12 @@ follow these steps:
    ```
 
    Investigate dependency mismatches with `npx expo install --check` and `npx expo-doctor`.
-   Do not bypass peer checks with `--force` or `--legacy-peer-deps`.
+   Do not bypass peer checks with `--force` or `--legacy-peer-deps`, and don't run
+   `npm audit fix --force`: it suggests old Expo and Jest versions that don't work with this SDK.
+
+   To upgrade the Expo SDK, follow
+   [Expo's upgrade guide](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/),
+   run `npx expo install --fix`, and then `npm run validate` again.
 
 2. Start the app locally (in your local machine)
 

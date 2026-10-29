@@ -64,12 +64,12 @@ When the ToggleLike action is dispatched with that card's ID.
 Then the card should be marked as liked in the state.
 `, async () => {
 
-  // 1. Set up the store with initial state
-  const store = createStore<State>({
+  // 1. Set up the store with initial state. It's disposed after the test.
+  const store = disposeAfterTest(createStore<State>({
     initialState: State.initialState,
     logger: () => {},
     logStateChanges: false
-  });
+  }));
 
   const cardId = '123';
 
@@ -91,8 +91,10 @@ To add a new test for an action:
 1. Create a new file named `action-name.test.ts` in the `__tests__` directory
 2. Import the action, the state, and anything else the test needs
 3. If the action uses the store's dependencies (`this.deps`), give the store fake ones (see below)
-4. Write your test cases following the BDD pattern described above
-5. Remember to format test descriptions with the Given/When/Then structure on multiple lines
+4. Wrap each store in `disposeAfterTest(...)`, and add `afterEach(disposeTestStores)` to the file (both from
+   `test-utils/dispose-after-test.ts`), so that each store is disposed at the end of its test, even if the test fails
+5. Write your test cases following the BDD pattern described above
+6. Remember to format test descriptions with the Given/When/Then structure on multiple lines
 
 ### Another test example
 

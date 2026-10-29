@@ -4,16 +4,19 @@ import { CardsPage, Dependencies } from '../business/dependencies/dependencies';
 import { SimulatedDependencies } from '../business/dependencies/simulated-dependencies';
 import { Environment } from '../business/infra/environment';
 import { State } from '../business/state/state';
+import { disposeAfterTest, disposeTestStores } from '../test-utils/dispose-after-test';
+
+afterEach(disposeTestStores);
 
 /** Each test creates its own store, with its own dependencies. Nothing global to reset. */
 function createTestStore(dependencies: Dependencies = new SimulatedDependencies()) {
-  return createStore<State>({
+  return disposeAfterTest(createStore<State>({
     initialState: State.initialState,
     environment: Environment.testing,
     dependencies: () => dependencies,
     logger: () => { },
     logStateChanges: false,
-  });
+  }));
 }
 
 describe('FetchCards Action', () => {

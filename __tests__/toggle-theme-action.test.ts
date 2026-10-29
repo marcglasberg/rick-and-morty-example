@@ -1,6 +1,9 @@
 import { createStore } from 'kiss-for-react';
 import { ToggleTheme } from '../business/actions/toggle-theme-action';
 import { State } from '../business/state/state';
+import { disposeAfterTest, disposeTestStores } from '../test-utils/dispose-after-test';
+
+afterEach(disposeTestStores);
 
 describe('ToggleTheme Action', () => {
 
@@ -10,11 +13,11 @@ describe('ToggleTheme Action', () => {
     Then the theme should change to dark.
   `, async () => {
 
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState.withColorScheme('light'),
       logger: () => { }, 
       logStateChanges: false
-    });
+    }));
 
     // Given the current theme is light.
     expect(store.state.colorScheme).toBe('light');
@@ -32,11 +35,11 @@ describe('ToggleTheme Action', () => {
     Then the theme should change to light.
   `, async () => {
     
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: new State({ colorScheme: 'dark' }),
       logger: () => { }, 
       logStateChanges: false
-    });
+    }));
 
     // Given the current theme is dark.
     expect(store.state.colorScheme).toBe('dark');
@@ -54,11 +57,11 @@ describe('ToggleTheme Action', () => {
     Then the theme should change to light.
   `, async () => {
 
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState,
       logger: () => { }, 
       logStateChanges: false
-    });
+    }));
 
     // Given the current theme is null (system default).
     expect(store.state.colorScheme).toBeNull();
@@ -77,11 +80,11 @@ describe('ToggleTheme Action', () => {
   `, async () => {
 
     // Arrange: Create a store with light theme.
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState.withColorScheme('light'),
       logger: () => { }, 
       logStateChanges: false
-    });
+    }));
 
     // Check initial state - theme should be light.
     expect(store.state.colorScheme).toBe('light');
@@ -100,11 +103,11 @@ describe('ToggleTheme Action', () => {
   `, async () => {
 
     // Arrange: Create a store with dark theme.
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState.withColorScheme('dark'),
       logger: () => { }, 
       logStateChanges: false
-    });
+    }));
 
     // Check initial state - theme should be dark.
     expect(store.state.colorScheme).toBe('dark');

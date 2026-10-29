@@ -7,15 +7,18 @@ import { createStore, StoreProvider } from 'kiss-for-react';
 import { State } from '../business/state/state';
 import { triggerHaptic } from '../components/HapticFeedback';
 import { useOpenCard } from '../hooks/useOpenCard';
+import { disposeAfterTest, disposeTestStores } from '../test-utils/dispose-after-test';
 
 jest.mock('../components/HapticFeedback', () => ({ triggerHaptic: jest.fn() }));
+
+afterEach(disposeTestStores);
 
 test(`
 Given the home route is focused.
 When two card presses arrive before Router commits navigation.
 Then one Back returns home and a subsequent card press opens normally.
 `, async () => {
-  const store = createStore<State>({ initialState: State.initialState, logger: () => {}, logStateChanges: false });
+  const store = disposeAfterTest(createStore<State>({ initialState: State.initialState, logger: () => {}, logStateChanges: false }));
   function Home() {
     const openCard = useOpenCard();
     return <Button title="Double open" onPress={() => { openCard('1'); openCard('1'); }} />;
@@ -41,7 +44,7 @@ Given a cold direct detail URL for card %s without loaded card data.
 When Home is chosen from the actual detail screen and a card is pressed.
 Then the existing history does not block opening that card.
 `, async (id) => {
-  const store = createStore<State>({ initialState: State.initialState, logger: () => {}, logStateChanges: false });
+  const store = disposeAfterTest(createStore<State>({ initialState: State.initialState, logger: () => {}, logStateChanges: false }));
   function Home() {
     const openCard = useOpenCard();
     return <Button title="Open another card" onPress={() => { openCard('2'); openCard('2'); }} />;
@@ -68,7 +71,7 @@ Given a synchronous error before navigation is queued.
 When the error is reported and the user retries the card press.
 Then the opening gate does not remain locked.
 `, async () => {
-  const store = createStore<State>({ initialState: State.initialState, logger: () => {}, logStateChanges: false });
+  const store = disposeAfterTest(createStore<State>({ initialState: State.initialState, logger: () => {}, logStateChanges: false }));
   function Home() {
     const openCard = useOpenCard();
     return <Button title="Open card" onPress={() => openCard('2')} />;

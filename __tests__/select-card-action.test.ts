@@ -1,6 +1,9 @@
 import { createStore } from 'kiss-for-react';
 import { SelectCard } from '../business/actions/select-card-action';
 import { State } from '../business/state/state';
+import { disposeAfterTest, disposeTestStores } from '../test-utils/dispose-after-test';
+
+afterEach(disposeTestStores);
 
 describe('SelectCard Action', () => {
 
@@ -10,11 +13,11 @@ describe('SelectCard Action', () => {
     Then card "123" is selected.
   `, async () => {
     
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState,
       logger: () => { }, 
       logStateChanges: false
-    });    
+    }));    
 
     // Given no card is selected.
     expect(store.state.selectedCardId).toBeNull();
@@ -33,11 +36,11 @@ describe('SelectCard Action', () => {
   `, async () => {
     
     const initialState = new State({ selectedCardId: '123' });
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState,
       logger: () => { }, 
       logStateChanges: false
-    });    
+    }));    
 
     // Given card "123" is selected.
     expect(store.state.selectedCardId).toBe('123');

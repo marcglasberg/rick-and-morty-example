@@ -9,9 +9,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-naviga
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ShowUserException, StoreProvider, createStore } from 'kiss-for-react';
+import { ShowUserException, StoreProvider, UserException, createStore, useStoreEffect } from 'kiss-for-react';
 import React, { useEffect, useState } from 'react';
-import { Alert, Dimensions, Linking, Platform, StyleSheet, Text, View } from 'react-native';
+import { Alert, AppState, Dimensions, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
 export const userExceptionDialog: ShowUserException =
@@ -45,9 +45,24 @@ const store = createStore<State>({
   // Tells the store when the device is online, for the actions with `checkInternet`.
   // When NetInfo doesn't know yet (`isConnected` is null), assume we are online.
   onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)),
-  logger: console.log,
-  logStateChanges: true,
+  // Tells the store when the app is in the foreground, for `onFocus` and `onBlur`.
+  focusSource: (setFocused) => {
+    setFocused(AppState.currentState === 'active');
+    const subscription = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
+    return () => subscription.remove();
+  },
+  // Logging slows the app down, so it's on only in development.
+  logger: __DEV__ ? console.log : null,
+  logStateChanges: __DEV__,
   showUserException: userExceptionDialog,
+  // User exceptions are shown to the user. In development, other errors are thrown, so that
+  // we see them in the console. In release builds, they are logged and shown to the user as a
+  // generic message.
+  errorObserver: ({ error, action }) => {
+    if (error instanceof UserException || __DEV__) return error;
+    console.error(`Got ${error} in ${action ?? 'the persistor'}.`);
+    return new UserException('Something went wrong. Please try again.', { hardCause: error });
+  },
   persistor: new AppPersistor(),
 });
 
@@ -72,6 +87,13 @@ export default function RootLayout() {
 function MainAppLayout() {
 
   const isDarkTheme = useIsDarkTheme();
+
+  // The app may be killed while in the background, before the persistor's throttle
+  // period ends. So we save the state as soon as the app goes to the background.
+  useStoreEffect({
+    onBlur: (store) => store.persistAndPausePersistor(),
+    onFocus: (store) => store.resumePersistor(),
+  });
   
   // Initialize dimensions state - use consistent source
   const [dimensions, setDimensions] = useState(() => {

@@ -12,7 +12,7 @@ import { useOpenCard } from '@/hooks/useOpenCard';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useDispatch, useSelect, useStoreEffect } from 'kiss-for-react';
+import { useDispatch, useIsStoreReady, useSelect, useStoreEffect } from 'kiss-for-react';
 import React from 'react';
 import { StyleSheet, TouchableHighlight, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,8 +25,6 @@ export default function HomeScreen() {
     onMount: (store) => store.dispatch(new FetchCards()),
   });
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
-  const theme = useTheme();
   const isDarkTheme = useIsDarkTheme();
 
   const handleCardPress = useOpenCard();
@@ -84,11 +82,6 @@ export default function HomeScreen() {
     );
   };
 
-  const handleThemeToggle = () => {
-    triggerHaptic('medium');
-    dispatch(new ToggleTheme({ currentTheme: theme }));
-  };
-
   // Component for when there are no items.
   const EmptyComponent = () => null;
 
@@ -111,23 +104,37 @@ export default function HomeScreen() {
           contentFit="cover"
         />
       }
-      headerActions={
-        <TouchableOpacity
-          style={[
-            styles.themeToggle,
-            { marginTop: insets.top > 0 ? insets.top : 10 } // Top margin based on safe area
-          ]}
-          onPress={handleThemeToggle}
-          accessibilityLabel="Toggle light/dark theme"
-        >
-          <Ionicons
-            name={isDarkTheme ? "sunny" : "moon"}
-            size={24}
-            color={isDarkTheme ? "#6B4E31" : "#6B4E31"}
-          />
-        </TouchableOpacity>
-      }
+      headerActions={<ThemeToggle />}
     />
+  );
+}
+
+// Disabled while the saved state loads, since actions can't be dispatched until then.
+function ThemeToggle() {
+  const theme = useTheme();
+  const isStoreReady = useIsStoreReady();
+  const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.themeToggle,
+        { marginTop: insets.top > 0 ? insets.top : 10 } // Top margin based on safe area
+      ]}
+      disabled={!isStoreReady}
+      onPress={() => {
+        triggerHaptic('medium');
+        dispatch(new ToggleTheme({ currentTheme: theme }));
+      }}
+      accessibilityLabel="Toggle light/dark theme"
+    >
+      <Ionicons
+        name={theme === 'dark' ? "sunny" : "moon"}
+        size={24}
+        color="#6B4E31"
+      />
+    </TouchableOpacity>
   );
 }
 

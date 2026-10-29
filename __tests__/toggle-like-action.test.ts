@@ -2,6 +2,9 @@ import { createStore } from 'kiss-for-react';
 import { ToggleLike } from '../business/actions/toggle-like-action';
 import { LikedCards } from '../business/state/liked-cards';
 import { State } from '../business/state/state';
+import { disposeAfterTest, disposeTestStores } from '../test-utils/dispose-after-test';
+
+afterEach(disposeTestStores);
 
 describe('ToggleLike Action', () => {
 
@@ -11,11 +14,11 @@ describe('ToggleLike Action', () => {
     Then card "123" should be added to the liked cards list.
   `, async () => {
 
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState,
       logger: () => { }, // Empty function as logger
       logStateChanges: false
-    });    
+    }));    
 
     // Given card "123" is not in the liked cards list.
     expect(store.state.likedCards.isCardLiked('123')).toBe(false);
@@ -35,11 +38,11 @@ describe('ToggleLike Action', () => {
         
     const likedCards = new LikedCards([123]);
     const initialState = new State({ likedCards });
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState,
       logger: () => { }, // Empty function as logger
       logStateChanges: false
-    });    
+    }));    
 
     // Given card "123" is in the liked cards list.
     expect(store.state.likedCards.isCardLiked('123')).toBe(true);
@@ -57,11 +60,11 @@ describe('ToggleLike Action', () => {
     Then card "123" should alternate between being liked and not liked.
   `, async () => {
 
-    const store = createStore<State>({
+    const store = disposeAfterTest(createStore<State>({
       initialState: State.initialState,
       logger: () => { }, // Empty function as logger
       logStateChanges: false
-    });    
+    }));    
 
     // Given card "123" is not in the liked cards list.
     expect(store.state.likedCards.isCardLiked('123')).toBe(false);

@@ -4,6 +4,12 @@ import { Persistor } from "kiss-for-react";
 import { LikedCards } from '../state/liked-cards';
 import { State } from "../state/state";
 
+/** The part of the state that is saved. The cards are not saved, as they are fetched again. */
+interface SavedState {
+  likedCardIds: number[];
+  colorScheme: 'light' | 'dark' | null;
+}
+
 export class AppPersistor extends Persistor<State> {
 
   /**
@@ -15,27 +21,25 @@ export class AppPersistor extends Persistor<State> {
     if (Platform.OS === 'web' && typeof window === 'undefined') return null;
 
     // Reads the JSON as a string.
-    let serialized: string | null = await AsyncStorage.getItem('state');
+    const serialized: string | null = await AsyncStorage.getItem('state');
     if (serialized === null) return null;
 
-    // Deserialize the JSON string to a list of integers.
-    let likedCardIds: number[] = JSON.parse(serialized);
+    const parsed: SavedState | number[] = JSON.parse(serialized);
 
-    // Create a new LikedCards instance with the IDs
-    let likedCards = new LikedCards(likedCardIds);
+    // Older versions of the app saved only the liked card IDs, as an array.
+    const saved: SavedState = Array.isArray(parsed)
+      ? { likedCardIds: parsed, colorScheme: null }
+      : parsed;
 
-    // Return a new state with the liked cards
     return State.initialState.copy({
-      likedCards: likedCards,
+      likedCards: new LikedCards(saved.likedCardIds),
+      colorScheme: saved.colorScheme,
     });
   }
 
   /** Save an initial-state (empty) to the persistence. */
   async saveInitialState(state: State): Promise<void> {
-    if (Platform.OS === 'web' && typeof window === 'undefined') return;
-
-    const serialized = JSON.stringify([]);
-    await AsyncStorage.setItem('state', serialized);
+    await this.save(state);
   }
 
   /** Delete the saved state from the persistence.*/
@@ -44,12 +48,25 @@ export class AppPersistor extends Persistor<State> {
     await AsyncStorage.removeItem('state');
   }
 
-  /** State is small, so we save `newState` everytime, ignoring `lastPersistedState`. */
-  async persistDifference(_lastPersistedState: State | null, newState: State) {
+  /**
+   * The saved part of the state is small, so we save all of it,
+   * but only if it changed since it was last saved.
+   */
+  async persistDifference(lastPersistedState: State | null, newState: State) {
+    if (lastPersistedState !== null
+      && lastPersistedState.likedCards === newState.likedCards
+      && lastPersistedState.colorScheme === newState.colorScheme) return;
+
+    await this.save(newState);
+  }
+
+  private async save(state: State): Promise<void> {
     if (Platform.OS === 'web' && typeof window === 'undefined') return;
 
-    let likedCards = newState.likedCards;
-    const serialized = JSON.stringify(likedCards.ids);
-    await AsyncStorage.setItem('state', serialized);
+    const saved: SavedState = {
+      likedCardIds: [...state.likedCards.ids],
+      colorScheme: state.colorScheme,
+    };
+    await AsyncStorage.setItem('state', JSON.stringify(saved));
   }
 }

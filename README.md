@@ -721,43 +721,56 @@ We use Kiss's hooks:
 As you can see, we get all this functionality of the card list almost for free, with very little code, just by using the
 state management system itself to monitor that the action is running or has failed.
 
-## Saving likes
+## Saving likes and the theme
 
-Likes are saved locally on the device. When reloading the app, liked cards remain liked. This functionality leverages
-Kiss's "persistor" feature, which saves the required parts of the state:
+Likes and the chosen theme are saved locally on the device. When reloading the app, liked cards remain liked, and the
+theme stays the same. This functionality leverages Kiss's "persistor" feature (in `business/infra/app-persistor.ts`),
+which saves the required parts of the state. The cards themselves are not saved, as they are fetched again.
+
+When the state changes, the persistor saves the likes and the theme, but only if they changed:
 
 ```typescript
-async persistDifference(_lastPersistedState: State | null, newState: State) {
+async persistDifference(lastPersistedState: State | null, newState: State) {
+  if (lastPersistedState !== null
+    && lastPersistedState.likedCards === newState.likedCards
+    && lastPersistedState.colorScheme === newState.colorScheme) return;
 
-  // Get liked cards from the new state
-  let likedCards = newState.likedCards;
+  await this.save(newState);
+}
 
-  // Serialize likedCards to a string
-  const serialized = JSON.stringify(likedCards.ids);
-
-  // Save the serialized string to AsyncStorage
-  await AsyncStorage.setItem('state', serialized);
+private async save(state: State): Promise<void> {
+  const saved: SavedState = {
+    likedCardIds: [...state.likedCards.ids],
+    colorScheme: state.colorScheme,
+  };
+  await AsyncStorage.setItem('state', JSON.stringify(saved));
 }
 ```
 
-On app startup, liked cards are read automatically:
+On app startup, they are read automatically:
 
 ```typescript
-async readState(): Promise < State | null > {
-
-  // Read serialized JSON string
-  let serialized = await AsyncStorage.getItem('state');
+async readState(): Promise<State | null> {
+  const serialized: string | null = await AsyncStorage.getItem('state');
   if (serialized === null) return null;
-    
-  // Deserialize JSON to a list of integers.
-  let likedCardIds = JSON.parse(serialized);
-    
-  // Create a new LikedCards instance with the card IDs
-  let likedCards = new LikedCards(likedCardIds);
-    
-  // Return a new state with the liked cards
-  return State.initialState.copy({likedCards: likedCards});
+
+  const saved: SavedState = JSON.parse(serialized);
+
+  return State.initialState.copy({
+    likedCards: new LikedCards(saved.likedCardIds),
+    colorScheme: saved.colorScheme,
+  });
 }
+```
+
+Kiss waits up to 2 seconds between saves. Since the app may be killed while in the background, before that time ends,
+the app saves the state as soon as it goes to the background (in `app/_layout.tsx`):
+
+```typescript
+useStoreEffect({
+  onBlur: (store) => store.persistAndPausePersistor(),
+  onFocus: (store) => store.resumePersistor(),
+});
 ```
 
 ## Testing

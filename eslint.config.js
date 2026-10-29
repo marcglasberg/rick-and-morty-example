@@ -18,6 +18,16 @@ module.exports = defineConfig([
     },
   },
   {
+    // Opt-in Kiss rules for this app's conventions: actions are named without an `Action`
+    // suffix (`FetchCards`), live in files ending with `-action`, and the store starts
+    // from `State.initialState`.
+    rules: {
+      'kiss-for-react/action-name-without-action': 'warn',
+      'kiss-for-react/action-file-name-ends-with-action': 'warn',
+      'kiss-for-react/missing-initial-state': 'warn',
+    },
+  },
+  {
     ignores: ['dist/*', '.expo/*'],
   },
 ]);

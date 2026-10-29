@@ -14,7 +14,7 @@ To run a specific test file:
 
 ```bash
 # Run the ToggleLike action test
-npm run test:toggle-like
+npx jest __tests__/toggle-like-action.test.ts
 ```
 
 ## Using the VS Code Jest Extension
@@ -36,7 +36,7 @@ Notes:
 
 Tests for Kiss actions generally follow this pattern:
 
-1. Set up the store with an initial state
+1. Set up the store with an initial state (and fake dependencies, if the actions use them)
 2. Dispatch one or more actions
 3. Wait for the actions to complete
 4. Verify the new state
@@ -88,9 +88,9 @@ Then the card should be marked as liked in the state.
 
 To add a new test for an action:
 
-1. Create a new file named `action-name.test.ts` in the same directory as the action
-2. Import the necessary dependencies
-3. Mock any external dependencies if needed
+1. Create a new file named `action-name.test.ts` in the `__tests__` directory
+2. Import the action, the state, and anything else the test needs
+3. If the action uses the store's dependencies (`this.deps`), give the store fake ones (see below)
 4. Write your test cases following the BDD pattern described above
 5. Remember to format test descriptions with the Given/When/Then structure on multiple lines
 
@@ -115,7 +115,7 @@ And the second case should throw a UserException.
 async () => {
 
   const store = createStore<State>({
-    initialState: new State(['A', 'B', 'C'], -1);
+    initialState: new State(['A', 'B', 'C'], -1),
   });
   
   // Should select item 2
@@ -127,3 +127,23 @@ async () => {
   expect(status.originalError).toBeInstanceOf(UserException);          
 });
 ```
+
+### Injecting fake dependencies
+
+Actions load data through the dependencies injected into the store (`this.deps`), never through
+modules. So, instead of mocking modules with `jest.mock`, each test creates its own store with its
+own dependencies. There is nothing global to set up or reset between tests:
+
+```typescript
+const store = createStore<State>({
+  initialState: State.initialState,
+  environment: Environment.testing,
+  dependencies: () => new SimulatedDependencies(),
+});
+
+await store.dispatchAndWait(new FetchCards());
+expect(store.state.cardList.items.length).toBe(20);
+```
+
+`SimulatedDependencies` returns 25 fake cards, in 2 pages. A test may also create a fake just for
+itself, for example to record the calls or to fail on purpose. See `fetch-cards-action.test.ts`.

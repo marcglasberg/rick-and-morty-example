@@ -1,6 +1,7 @@
-import { Action, DAO } from '../infra/action';
+import { Action } from '../infra/action';
 import { State } from '../state/state';
 
+/** Loads the next page of cards, and adds it to the end of the card list. */
 export class FetchCards extends Action {
 
     nonReentrant = true;
@@ -15,31 +16,20 @@ export class FetchCards extends Action {
     checkInternet = { dialog: true }
 
     async reduce() {
-
-        let nextPage = this.state.nextPage();
+        const nextPage = this.state.nextPage();
 
         // No more pages to fetch.
-        if (nextPage == null) {
-            return null;
-        }
-        //
-        else {
-            // Delay just so we can see the loading spinner (remove in production).            
-            await new Promise(resolve => setTimeout(resolve, 200));
-            
-            // Fetch the next page of cards.
-            console.log('Fetching page:', nextPage);
-            const { cards, totalCount, totalPages } = await DAO.loadCards({ page: nextPage });
+        if (nextPage === null) return null;
 
-            // Add the newly fetched cards to the existing card list.
-            let allCards = this.state.cardList.addCards(cards);
+        // Delay just so we can see the loading spinner (remove in production).
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-            return (state: State) => state.copy({
-                cardList: allCards,
-                totalCount: totalCount,
-                totalPages: totalPages,
-            }
-            );
-        }
+        const { cards, totalCount, totalPages } = await this.deps.loadCards({ page: nextPage });
+
+        return (state: State) => state.copy({
+            cardList: state.cardList.addCards(cards),
+            totalCount,
+            totalPages,
+        });
     }
 }

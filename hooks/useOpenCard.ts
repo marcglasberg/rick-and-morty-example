@@ -1,4 +1,4 @@
-import { SelectCard } from '@/business/actions/select-card-actions';
+import { SelectCard } from '@/business/actions/select-card-action';
 import { triggerHaptic } from '@/components/HapticFeedback';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useDispatch } from 'kiss-for-react';

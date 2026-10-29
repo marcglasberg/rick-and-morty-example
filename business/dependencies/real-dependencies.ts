@@ -3,13 +3,13 @@ import { UserException } from 'kiss-for-react';
 import { Client, createClient, gql } from 'urql';
 import { Card } from '../state/card';
 import { CardList } from '../state/card-list';
-import { Dao } from './dao';
+import { CardsPage, Dependencies } from './dependencies';
 
-export class RealDao extends Dao {
+/** Loads the cards from the Rick and Morty API, with GraphQL. */
+export class RealDependencies implements Dependencies {
     private client: Client;
 
     constructor() {
-        super();
         // GraphQL client for Rick and Morty API.
         this.client = createClient({
             url: 'https://rickandmortyapi.com/graphql',
@@ -17,7 +17,7 @@ export class RealDao extends Dao {
         });
     }
 
-    async loadCards({ page }: { page: number }): Promise<{ cards: CardList, totalCount: number, totalPages: number }> {
+    async loadCards({ page }: { page: number }): Promise<CardsPage> {
         try {
             const charactersQuery = gql`
                 query CharactersQuery($page: Int!) {

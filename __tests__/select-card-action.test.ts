@@ -1,5 +1,5 @@
 import { createStore } from 'kiss-for-react';
-import { SelectCard } from '../business/actions/select-card-actions';
+import { SelectCard } from '../business/actions/select-card-action';
 import { State } from '../business/state/state';
 
 describe('SelectCard Action', () => {

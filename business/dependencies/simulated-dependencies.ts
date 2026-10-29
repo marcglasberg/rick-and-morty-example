@@ -1,10 +1,10 @@
 import { Card } from '../state/card';
 import { CardList } from '../state/card-list';
-import { Dao } from './dao';
+import { CardsPage, Dependencies } from './dependencies';
 
-export class SimulatedDao extends Dao {
-    async loadCards({ page = 1 }: { page?: number }): Promise<{ cards: CardList, totalCount: number, totalPages: number }> {
-        // For a simulated DAO, we return mock Rick and Morty character data
+/** Fake data, to run the app and the tests without the server: 25 cards, in 2 pages. */
+export class SimulatedDependencies implements Dependencies {
+    async loadCards({ page }: { page: number }): Promise<CardsPage> {
         const mockCards = [
             new Card(
                 '1',

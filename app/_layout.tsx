@@ -1,7 +1,10 @@
 import '../safe-area.css';
+import { createDependencies } from '@/business/dependencies/create-dependencies';
 import { AppPersistor } from '@/business/infra/app-persistor';
+import { Environment } from '@/business/infra/environment';
 import { State } from '@/business/state/state';
 import { useIsDarkTheme } from '@/hooks/useTheme';
+import NetInfo from '@react-native-community/netinfo';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -32,17 +35,21 @@ export const userExceptionDialog: ShowUserException =
     }
   };
 
+// Change to `Environment.simulation` to run the app with fake cards, without the server.
+const environment = Environment.production;
+
 const store = createStore<State>({
   initialState: State.initialState,
+  environment,
+  dependencies: (store) => createDependencies(store),
+  // Tells the store when the device is online, for the actions with `checkInternet`.
+  // When NetInfo doesn't know yet (`isConnected` is null), assume we are online.
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)),
   logger: console.log,
   logStateChanges: true,
   showUserException: userExceptionDialog,
   persistor: new AppPersistor(),
 });
-
-// IMPORTANT:
-// Uncomment the following line to use the simulated DAO for testing.
-// setDao(new SimulatedDao());
 
 export default function RootLayout() {
 

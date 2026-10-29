@@ -116,8 +116,8 @@ the API is unavailable or unstable, which can cause the app to fail to load card
 The app can be viewed running [here](https://rick-and-morty-example.expo.app/), but if you want to run it yourself,
 follow these steps:
 
-1. Follow [Expo setup and validation](DEPENDENCY_UPDATES.md), including the two existing sibling Kiss tarballs.
-   Use a patched supported Node release (validated with Node 24.22.1), then install the locked dependency graph:
+1. Follow [Expo setup and validation](DEPENDENCY_UPDATES.md). Use a patched supported Node release (validated with
+   Node 24.22.1), then install the locked dependency graph:
 
    ```bash
    npm ci
@@ -202,13 +202,16 @@ For more information, see: https://docs.expo.dev/eas/hosting/get-started
 ### Initial template
 
 The app was initially created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app),
-which sets up the basic template of a Expo app with TypeScript support. The following line was then added
-to the `package.json` file:
+which sets up the basic template of a Expo app with TypeScript support. Kiss and its linter
+(see [Linting](#linting)) were then added to the `package.json` file:
 
 ```json
 {
   "dependencies": {
-    "kiss-for-react": "^2.0.0"
+    "kiss-for-react": "^2.0.3"
+  },
+  "devDependencies": {
+    "eslint-plugin-kiss-for-react": "^1.0.1"
   }
 }
 ```
@@ -240,15 +243,16 @@ Here are the layers and how information flows in the app:
 4. While the action is running, it notifies the UI so the UI can show a progress indicator.
 
 5. The running action has access to the action parameters, the full app state, and any information loaded from external
-   services. Loading data from the server is done through a pattern called DAO (Data Access Object).
+   services. Loading data from the server is done through the **dependencies**: services injected into the store, which
+   the actions use.
 
-6. The DAO talks to external services over HTTP. It can call REST endpoints or send GraphQL queries, but those details
-   are hidden inside the DAO.
+6. The dependencies talk to external services over HTTP. They can call REST endpoints or send GraphQL queries, but those
+   details are hidden inside the dependencies.
 
-7. Inside the DAO, the external service replies. The DAO parses and maps the response into app state models that the
-   app can use directly.
+7. Inside the dependencies, the external service replies. The dependencies parse and map the response into app state
+   models that the app can use directly.
 
-8. The DAO returns the result to the action.
+8. The dependencies return the result to the action.
 
 9. The action completes by producing a new, modified app state. This becomes the new app state.
 
@@ -277,10 +281,10 @@ Since the above explanation may feel a bit abstract, let's review it again in mo
 3. Suppose the user interacts with the UI in a way that requires new data from the server. Components then dispatch
    actions (`useDispatch` hook) that are named to reflect the desired change in state. Dispatching an action is the only
    way to change state.
-   Example: the `FetchCards` action (in `app/business/actions/fetch-cards-action.ts`) can be dispatched in three cases:
+   Example: the `FetchCards` action (in `business/actions/fetch-cards-action.ts`)can be dispatched in three cases:
     * Automatically when the main app component mounts (`app/index.tsx`), to load the initial cards.
     * For pagination, when the user scrolls to the end of the list (`app/index.tsx`).
-    * By the Retry Button (`app/components/ParallaxScrollView.tsx`). Example:
+    * By the Retry Button (`components/ParallaxScrollView.tsx`). Example:
    ```tsx
    <Button
      title="Retry"
@@ -298,25 +302,27 @@ Since the above explanation may feel a bit abstract, let's review it again in mo
     * Parameters passed from the UI (in the `dispatch` call itself).
     * The entire app state, which is directly accessible in the action as `this.state`.
     * Data loaded from the server, local device, or third-party services.
-      The recommended way to load server data is through a DAO (Data Access Object). A DAO contains all the logic for
-      REST or GraphQL calls, hiding those details from the app. It exposes a clean interface to the business layer.
-      Example from the `FetchCards` action (`app/business/actions/fetch-cards-action.ts`):
+      This is done through the **dependencies**, which are injected into the store. They contain all the logic for
+      REST or GraphQL calls, hiding those details from the app, and expose a clean interface to the business layer.
+      Actions access them as `this.deps`. Example from the `FetchCards` action
+      (`business/actions/fetch-cards-action.ts`):
    ```typescript
-   const { cards, totalCount, totalPages } = await DAO.loadCards({ page: nextPage });
-   ``` 
+   const { cards, totalCount, totalPages } = await this.deps.loadCards({ page: nextPage });
+   ```
 
-6. The DAO talks to external services over HTTP. It can use REST or GraphQL, but the app only sees the DAO contract:
+6. The dependencies talk to external services over HTTP. They can use REST or GraphQL, but the app only sees the
+   `Dependencies` interface (in `business/dependencies/dependencies.ts`):
    ```typescript
-   export abstract class Dao {
-     abstract loadCards({ page }: { page: number }): Promise<{ cards: CardList, totalCount: number, totalPages: number }>;
+   export interface Dependencies {
+     loadCards({ page }: { page: number }): Promise<CardsPage>;
    }
    ```
 
-7. Inside the DAO, the external service replies. The DAO parses and maps the response into app state models that the app
-   can use directly. For example, the implementation fetches data from the Rick and Morty API using GraphQL, in
-   `business/dao/real-dao.ts`.
+7. Inside the dependencies, the external service replies. They parse and map the response into app state models that
+   the app can use directly. For example, `RealDependencies` fetches data from the Rick and Morty API using GraphQL, in
+   `business/dependencies/real-dependencies.ts`.
 
-8. The DAO returns the result to the action.
+8. The dependencies return the result to the action.
 
 9. The action completes by returning a new, modified app state. This becomes the new app state.
 
@@ -347,7 +353,7 @@ humans and AI to understand and modify the app:
     - Arrow 2: Respond with the requested parts of the state
     - Arrow 3: Run dispatched actions
     - Arrow 4: Inform the UI about actions that are running or that failed
-    - Arrows 5 and 8: Ask and receive data from the DAO (load from server, device, or 3rd-party services)
+    - Arrows 5 and 8: Ask and receive data from the dependencies (load from server, device, or 3rd-party services)
     - Arrow 9: Create a new, modified copy of the state, which becomes the new app state
     - Arrow 10: Notify the UI that the state changed (automatically)
 
@@ -363,7 +369,8 @@ The app has the following directory structure:
 
 * State management in `business/state` with immutable state
 * Kiss actions in `business/actions`
-* GraphQL encapsulated in DAO (Data Access Object) in `business/dao`
+* Dependencies (services injected into the store, like the GraphQL calls) in `business/dependencies`
+* The base action, the environment and the persistor in `business/infra`
 * UI components in `components`
 * Custom hooks in `hooks`
 * App screens in `app` using Expo Router's file-based routing
@@ -371,7 +378,7 @@ The app has the following directory structure:
 
 ## The State
 
-In `state.js` the app state is defined as an immutable object of type `State`, which includes:
+In `business/state/state.ts` the app stateis defined as an immutable object of type `State`, which includes:
 
 ```typescript
 cardList: CardList; // List of cards of type `Card`
@@ -443,41 +450,41 @@ This configuration specifies:
 Next is the reducer logic:
 
 ```typescript
-let nextPage = this.state.nextPage();
-if (nextPage == null) return null;        
+const nextPage = this.state.nextPage();
+if (nextPage === null) return null;
 ```
 
 The `nextPage` method determines whether more pages need to be loaded. If no more pages are available, returning `null`
 ends the action early and cancels the fetch.
 
 ```typescript
-const {cards, totalCount, totalPages}
-  = await DAO.loadCards({page: nextPage});
+const { cards, totalCount, totalPages }
+  = await this.deps.loadCards({ page: nextPage });
 ```
 
-We now fetch the cards with the `DAO.loadCards()` method.
+We now fetch the cards with `this.deps.loadCards()`.
 
-The DAO (Data Access Object) encapsulates server communication, isolating this logic from the rest of the app. In other
-words, the rest of the app doesn't know or care about how information is loaded. Currently, the DAO uses GraphQL, but it
-could use REST or another method without affecting the rest of the application.
+The [dependencies](#dependencies) encapsulate server communication, isolating this logic from the rest of the app. In
+other words, the rest of the app doesn't know or care about how information is loaded. Currently, they use GraphQL, but
+they could use REST or another method without affecting the rest of the application.
 
-This also means the DAO can be simulated during both development and in tests, so we can develop and test the app
-without needing to connect to the server. This is actually being done in this app, as we'll see later.
+This also means the dependencies can be simulated during both development and in tests, so we can develop and test the
+app without needing to connect to the server. This is actually being done in this app, as we'll see later.
 
 Finally, the reducer finishes by updating the state:
 
 ```typescript
-// Add the newly fetched cards to the existing list.
-let allCards = this.state.cardList.addCards(cards);
-
-// Return updated state with the new card list and updated totals.
-return (state: State) =>
-  this.state.copy({
-    cardList: allCards,
-    totalCount: totalCount,
-    totalPages: totalPages
-  });        
+// Add the newly fetched cards to the existing list, and update the totals.
+return (state: State) => state.copy({
+  cardList: state.cardList.addCards(cards),
+  totalCount,
+  totalPages,
+});
 ```
+
+Since the cards arrive later, the reducer returns a function that gets the state at that moment, instead of using the
+state from before the `await`. This way, it doesn't overwrite changes that other actions made while the cards were
+loading.
 
 ## Checking Internet Connection
 
@@ -494,10 +501,19 @@ centralizes internet connectivity logic in one place.
 
 ### How is it implemented?
 
-The `before()` method of the default Kiss `Action` class (defined in file `action.ts`) runs before each action. It
-checks if the action includes the `checkInternet` property and uses the `NetInfo` library to verify connectivity. If no
-internet is available, it throws a `UserException` (optionally showing a dialog), which prevents the reducer from
-executing and avoids unnecessary network requests.
+Before running an action with the `checkInternet` property, Kiss checks if the device is online. If it isn't, Kiss
+throws a `UserException` (optionally showing a dialog), which prevents the reducer from running and avoids unnecessary
+network requests.
+
+Kiss knows if the device is online from the store's `onlineSource`. In the browser, Kiss can find out by itself, but in
+React Native the app must tell it. In `app/_layout.tsx`, the store listens to the `NetInfo` library:
+
+```typescript
+const store = createStore<State>({
+  ...
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)),
+});
+```
 
 Note: `UserException` is provided by Kiss, and the app was set up to automatically show a dialog with an error message
 when this exception is thrown.
@@ -515,8 +531,8 @@ const store = createStore<State>({
 });
 ```
 
-Since DAO methods (that load information with GraphQL) are always called within actions, DAOs can also simply throw a
-`UserException` to show error dialogs to the user.
+Since the dependencies (that load information with GraphQL) are always called within actions, they can also simply
+throw a `UserException` to show error dialogs to the user.
 
 ### Retry button
 
@@ -533,37 +549,94 @@ If `isFetchCardsFailed` is true, we display a "Retry" button at the end of the c
 dispatches the `FetchCards` action again, automatically removing the "Retry" button and checking internet connectivity
 again.
 
-## DAO
+## Dependencies
 
-The DAO (Data Access Object) is a pattern that encapsulates all the code that loads information from the server. It is
-implemented in the `business/dao` directory, and is used to load the cards from the server.
+The dependencies are the services the actions use. Here, that's the code that loads the cards from the server. Instead of
+being imported from modules, they are injected into the store, as recommended by the
+[Kiss docs](https://kissforreact.org). They live in the `business/dependencies` directory:
 
-GraphQL isn't used anywhere else in the app. The app must ask the DAO to load or save data.
+* `dependencies.ts`: The `Dependencies` interface, which is all the actions know about.
+* `real-dependencies.ts`: `RealDependencies` loads the cards from the Rick and Morty API, with GraphQL.
+* `simulated-dependencies.ts`: `SimulatedDependencies` returns fake cards, without the server.
+* `create-dependencies.ts`: Creates the dependencies that fit the store's environment.
 
-**IMPORTANT:** The DAO methods return immutable objects that are already in their ideal format for being used by the
-app. The DAO never "leaks" the JSON format of the GraphQL. This uncouples the app from the GraphQL implementation, and
-allows the server API to evolve independently and with minimal impact on the app.
+GraphQL isn't used anywhere else in the app. The app must ask the dependencies to load or save data.
 
-### Simulating the DAO
+**IMPORTANT:** The dependencies return immutable objects that are already in their ideal format for being used by the
+app. They never "leak" the JSON format of the GraphQL. This uncouples the app from the GraphQL implementation, and allows
+the server API to evolve independently and with minimal impact on the app.
 
-Since the DAO completely encapsulates server communications, it can be **simulated** during development, and also when
-running tests. This allows us to develop and test the app without real server connectivity.
+### Injecting them into the store
 
-To see how this may help during development, open file `app/_layout.tsx` and uncomment the following line:
+The store is created in `app/_layout.tsx` with an **environment**, and a factory that creates the dependencies:
 
 ```typescript
-setDao(new SimulatedDao());
+const environment = Environment.production;
+
+const store = createStore<State>({
+  initialState: State.initialState,
+  environment,
+  dependencies: (store) => createDependencies(store),
+  ...
+});
 ```
 
-This replaces the real DAO with a simulated one providing fake data. The app will then have only 25 fake cards in 2
-pages.
+The factory gets the store, so it can pick the dependencies from the environment:
+
+```typescript
+export function createDependencies(store: Store<State>): Dependencies {
+  switch (store.environment as Environment) {
+    case Environment.production:
+      return new RealDependencies();
+    default:
+      return new SimulatedDependencies();
+  }
+}
+```
+
+The store types the environment and the dependencies as `unknown`, so the base action (`business/infra/action.ts`)
+declares typed getters for them. All actions extend this base action, and simply write `this.deps` and `this.env`,
+without casts:
+
+```typescript
+export abstract class Action extends KissAction<State> {
+  get env(): Environment { return this.store.environment as Environment; }
+  get deps(): Dependencies { return this.store.dependencies as Dependencies; }
+}
+```
+
+Components don't use the dependencies. They dispatch actions, and the actions use the dependencies.
+
+### Simulating the dependencies
+
+Since the dependencies completely encapsulate server communications, they can be **simulated** during development, and
+also when running tests. This allows us to develop and test the app without real server connectivity.
+
+To see how this may help during development, open file `app/_layout.tsx` and change the environment to:
+
+```typescript
+const environment = Environment.simulation;
+```
+
+The store then creates `SimulatedDependencies` instead of `RealDependencies`, and the app will have only 25 fake cards in
+2 pages.
 
 This is very helpful for development, as it allows us to create app features that need information that's not yet
 available in the server API. This uncouples the app development from the server development.
 
-Additionally, file `fetch-cards-action.test.ts`, which tests the `FetchCards` action, uses the simulated DAO to test the
-action without needing to connect to the server. By changing a flag, tests can also run against the real DAO when
-available.
+In tests, each test creates its own store with its own dependencies. There is nothing global to set up or reset, and no
+module mocking. For example, `fetch-cards-action.test.ts` creates its stores like this:
+
+```typescript
+const store = createStore<State>({
+  initialState: State.initialState,
+  environment: Environment.testing,
+  dependencies: () => new SimulatedDependencies(),
+});
+```
+
+A test can also give the store a fake made just for that test. In the same file, one test uses a fake that records which
+pages the `FetchCards` action asked for.
 
 ## Card list
 
@@ -644,7 +717,7 @@ values by calling these methods, and then compare the result to the expected obj
 
 Tests for Kiss actions generally follow this pattern:
 
-1. Set up the store with an initial state
+1. Set up the store with an initial state (and fake dependencies, if the actions use them)
 2. Dispatch one or more actions
 3. Wait for the actions to complete
 4. Verify the new state
@@ -663,10 +736,25 @@ But [exception to the rule if needed].
 Then [expected outcome].
 ```
 
+## Linting
+
+The app uses the [Kiss linter](https://www.npmjs.com/package/eslint-plugin-kiss-for-react)
+(`eslint-plugin-kiss-for-react`), which finds Kiss mistakes that compile fine but fail at runtime. It's set up in
+`eslint.config.js`, with type information turned on. Run it with:
+
+```bash
+npm run lint
+```
+
+Note `tsc` doesn't show these errors. Besides the recommended rules, `eslint.config.js` turns on a few opt-in rules for
+this app's conventions: action names without an `Action` suffix (`FetchCards`), action files ending with `-action`, and
+stores that start from `State.initialState`. The `AGENTS.md` file tells AI agents to run the linter too.
+
 ## Directory structure
 
 I like using a clean architecture pattern, dividing the app into layers. The UI layer (React components) is separated
-from the business logic layer (Kiss state and actions), which is separated from the data access layer (the DAO).
+from the business logic layer (Kiss state and actions), which is separated from the data access layer (the
+dependencies).
 
 The current directory structure fits this simple example app well. For a more complex real-world app, I usually prefer
 organizing files by feature rather than by type. This means all files related to a specific feature are kept in the same
@@ -710,10 +798,10 @@ how things work.
 The following features were not implemented in this app but could be added in the future:
 
 * **Using Mutations:** Implement a GraphQL mutation to allow users to "like" or "unlike" a card, persisting the state
-  through the API. To do this, create a DAO method called `saveLikes` that uses a GraphQL mutation to save likes on the
-  server. Then, call `await DAO.saveLikes()` from the `ToggleLike` action. This will allow the app to persist likes on
-  the server rather than just on the local device. When the app starts, it can dispatch a `LoadLikes` action that uses
-  the method `let likes = await DAO.loadLikes()` to load likes from the server. This ensures the app syncs likes between
+  through the API. To do this, add a `saveLikes` method to the dependencies, that uses a GraphQL mutation to save likes
+  on the server. Then, call `await this.deps.saveLikes()` from the `ToggleLike` action. This will allow the app to
+  persist likes on the server rather than just on the local device. When the app starts, it can dispatch a `LoadLikes`
+  action that uses `const likes = await this.deps.loadLikes()` to load likes from the server.This ensures the app syncs likes between
   the device and the server.
 
 * **Camera Handling (Images, QR Codes, etc.):** Integrate basic camera functionality so that users can capture a photo

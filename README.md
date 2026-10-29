@@ -1,16 +1,75 @@
-# README
+# Rick and Morty Example: a Kiss State Management Demo
 
-This **Rick and Morty Example** is an example of a React Native application using:
+This **Rick and Morty Example** is a React Native application using:
 
-* [Kiss state management](https://kissforreact.org) package
+* [Kiss state management](https://kissforreact.org), state management for React built for AI agents
 * [Rick and Morty API](https://rickandmortyapi.com/) with GraphQL
 * [Expo](https://expo.dev)
 
 View it running here: https://rick-and-morty-example.expo.app/
 
+> **This app is simple on purpose.**
+> It's a reference example for [Kiss](https://kissforreact.org), not a showcase of UI design
+> or of everything a production app needs. The UI is intentionally plain, and the features are
+> few, so that nothing gets in the way of what this repo is about: **the architecture**. Look at
+> how the state, actions, and dependencies are organized, how little code each feature takes,
+> and how easy it is to test. The same structure scales to apps with thousands of files.
+
+## Built for AI agents
+
+Kiss is designed for apps written with AI coding agents like Claude Code and Codex. This repo is
+also meant to be read by agents, as an example of what a well-structured Kiss app looks like.
+
+Agents don't usually go wrong typing code. They go wrong when they have to choose: where does this
+state live, where is this error handled, how is this call retried? When an app does the same thing
+in three different ways, an agent will pick one at random, or invent a fourth. Kiss removes most of
+those choices, and this app shows the result:
+
+* **One way to change state.** Every state change is an action (see [Actions](#actions)), so an agent
+  that reads one action knows how to write the next.
+* **State is easy to find.** All state lives in one store, made of plain immutable classes
+  (see [The State](#the-state)). An agent searching for existing state finds it, instead of
+  creating a duplicate.
+* **Common features are one line.** Loading spinners, error messages, retries, checking the internet
+  connection, and persistence come from Kiss, so the agent doesn't write (and you don't review)
+  custom code for each.
+* **Easy to test.** Business logic is separate from the UI, so the agent can write and run plain
+  tests for it (see [Testing](#testing)).
+* **A linter checks the agent's work.** The Kiss linter finds mistakes that compile fine but fail at
+  runtime. The [`AGENTS.md`](AGENTS.md) file tells agents to run it, so they fix their own mistakes
+  without spending tokens guessing (see [Linting](#linting)).
+
+The code an agent sees is its strongest instruction: it copies the patterns around it. A clean
+example like this one keeps it on track, session after session.
+
+### Using this repo with your agent
+
+* To learn Kiss, tell your AI agent:
+
+  > "Read https://kissforreact.org/kiss-state-management-docs.md, then read
+  > https://github.com/marcglasberg/rick-and-morty-example, and explain to me 
+  > in simple terms how Kiss works."
+
+* To start a new **Expo** app, tell your AI agent:
+
+  > "Clone https://github.com/marcglasberg/rick-and-morty-example into a new folder.
+  > Remove the Rick and Morty features (cards, likes, GraphQL), but keep the architecture,
+  > the linter, the tests setup, and AGENTS.md. Rename the app to <name>, remove the EAS
+  > projectId from app.json, and start a fresh git history."
+
+* For an existing app, or one that doesn't use Expo, tell your AI agent:
+
+  > "Use https://github.com/marcglasberg/rick-and-morty-example as a reference for
+  > the structure of my app."
+
+Two AI agents explain, in their own words, why Kiss helps them:
+
+* [Claude's opinion](https://kissforreact.org/react/getting-started/claude-opinion-kiss) and
+* [Codex's opinion](https://kissforreact.org/react/getting-started/codex-opinion-kiss).
+
 ## Most React apps turn into a mess
 
-Most React apps turn into a mess. Not at first. Early on they feel quick and easy. But soon every change touches too
+Many React apps turn into a mess. Not at first. Early on they feel quick and easy. But soon every change touches too
 many files, bugs slip in, and adding features feels risky. State, effects, and async logic hide everywhere. Testing
 becomes so hard that many teams just give up.
 
@@ -79,10 +138,14 @@ easy management, caching, and updates.
 2. Make the process of adding features and testing obvious. Some libraries like Redux Toolkit, MobX, and Zustand make
    parts of this clear but leave other parts complex.
 
+3. Make it hard to go off track. When there is one clear way to do each thing, both people and AI agents keep the
+   code consistent, even after many changes made by many hands.
+
 At every step in designing the architecture, ask:
 
 * Will this stay simple when the app is large?
 * Is it simple for all the kinds of tasks real-world apps require?
+* Will an AI agent that reads this code know how to write the next feature?
 
 These ideas can be applied with any state management or framework (TanStack Query, Redux Toolkit, MobX, Zustand, Relay,
 etc.). But [Kiss state management](https://kissforreact.org) was built from the ground up with these principles in mind,
@@ -109,7 +172,7 @@ the API is unavailable or unstable, which can cause the app to fail to load card
 ## Installation (optional)
 
 <details>
-<summary>Click here to see instalation instructions</summary>
+<summary>Click here to see installation instructions</summary>
 
 &nbsp;
 
@@ -168,7 +231,7 @@ server (`npx expo start`) in the regular Windows terminal instead of WSL._
 
 The app uses React Native for web (RNW), which is a set of component libraries such as `<View>`, and `<Text>`, that wrap
 react-dom primitives such as `<div>`, `<p>`, and `<img>`. This means this app can run both on mobile devices and in a
-web browser._
+web browser.
 
 You can see the app running [here](https://rick-and-morty-example.expo.app/).
 This deployment was done with Expo's free EAS hosting service, following these steps:
@@ -383,7 +446,7 @@ The app has the following directory structure:
 
 ## The State
 
-In `business/state/state.ts` the app stateis defined as an immutable object of type `State`, which includes:
+In `business/state/state.ts` the app state is defined as an immutable object of type `State`, which includes:
 
 ```typescript
 cardList: CardList; // List of cards of type `Card`
@@ -753,7 +816,8 @@ npm run lint
 
 Note `tsc` doesn't show these errors. Besides the recommended rules, `eslint.config.js` turns on a few opt-in rules for
 this app's conventions: action names without an `Action` suffix (`FetchCards`), action files ending with `-action`, and
-stores that start from `State.initialState`. The `AGENTS.md` file tells AI agents to run the linter too.
+stores that start from `State.initialState`. The [`AGENTS.md`](AGENTS.md) file tells AI agents to run the linter after each change, and fix
+all `kiss-for-react/...` errors and warnings. This way, the agent catches these mistakes itself, before you review the code.
 
 ## Directory structure
 
@@ -774,7 +838,7 @@ retrying failed actions, displaying loading spinners and error indicators, and p
 implementing these features is very easy to read, understand, and modify.
 
 The essence of great software design often boils down to two fundamental principles: making things easy and keeping
-things simple. At first glance, "easy" and "simple" might appear similar, but there'ss a crucial distinction.
+things simple. At first glance, "easy" and "simple" might appear similar, but there's a crucial distinction.
 
 When something is **easy**, it often means minimal code is required to accomplish complex tasks. Frameworks and
 libraries can offer powerful abstractions that make difficult operations straightforward. Consider Expo's routing
@@ -796,7 +860,7 @@ spinners), has failed (to show error messages), automatic retries, and a lot mor
 magical abstractions by clearly communicating its internal operations. This ensures that developers aren't left guessing
 how things work.
 
-## final notes
+## Final notes
 
 ### More ideas
 
@@ -806,7 +870,7 @@ The following features were not implemented in this app but could be added in th
   through the API. To do this, add a `saveLikes` method to the dependencies, that uses a GraphQL mutation to save likes
   on the server. Then, call `await this.deps.saveLikes()` from the `ToggleLike` action. This will allow the app to
   persist likes on the server rather than just on the local device. When the app starts, it can dispatch a `LoadLikes`
-  action that uses `const likes = await this.deps.loadLikes()` to load likes from the server.This ensures the app syncs likes between
+  action that uses `const likes = await this.deps.loadLikes()` to load likes from the server. This ensures the app syncs likes between
   the device and the server.
 
 * **Camera Handling (Images, QR Codes, etc.):** Integrate basic camera functionality so that users can capture a photo

@@ -141,7 +141,8 @@ function MainAppLayout() {
           </View>
         </View>        
          
-        {windowWidth > 760 && (
+        {/* Only when the footer fits to the left of the phone, without covering it. */}
+        {windowWidth > 1000 && (
           <View style={styles.webFooter}>
             <Text style={styles.footerBold}>Kiss State Management Demo</Text>
             <Text style={[styles.footerText, { marginTop: 4 }]}>
@@ -281,7 +282,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: 20,
-    maxWidth: 400,
+    // Fixed width, so the text wraps right after "The UI is intentionally plain. The point is".
+    width: 265,
   },
   footerText: {
     color: 'rgba(255, 255, 255, 0.35)',
